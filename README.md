@@ -1,5 +1,3 @@
-**Project Proposal**
-
 The **DineAlert** application is designed to help restaurant owners track their visitors and respond to detection of in-store COVID-19 cases. This would help contain the spread of the virus. Customers can digitally sign-up on DineAlert, and an email alert will be sent to potentially infected visitors. Potential COVID-19 carriers refer to people who dine in at the same hour as a COVID-positive customer. Currently, restaurant visitors have to manually sign up during their visit, and restaurant owners can contact each potential COVID-19 carrier via text or calls. 
 
 This manual process is time consuming and the customer’s information is insecure and disorganized. Our project will digitalize the sign-up process, and would save time for both customers and restaurant owners. It is a practical project that would be profitable in  the catering industry, and could be expanded to other retailers and areas such as shopping malls, cinemas, and libraries. 
