@@ -13,6 +13,24 @@
             <div class = "reportDiningDiv">
                 <h1>Where are you dining tonight?</h1>
             </div>
+
+             <!-- Need to add form (added by Tauseef 05.07)
+                See person.java            -->
+            
+            <!-- ADDED BELOW--->
+            <form id="customer_id_form" action="#" method="post" th:action=@{/diningreportpage} th:object="${person}"> <!--shuold be person-->
+                <label>
+                    First Name <br>
+                    <input type = "text" autocomplete=off th:field=*{fname} placeholder="First Name" required> <!--customer first name-->
+                </label>
+
+                <label>
+                    Last Name <br>
+                    <input type = "text" autocomplete=off th:field=*{lname} placeholder="Last Name" required> <!--customer last name-->
+                </label>
+            </form>
+            
+            <!-- back page button-->
             <form id = "backToUserSelect" th:action = "@{/}" method="post">
                 <td><input type ="submit" value="Return to home" class = "backButton"/></td>
             </form>
