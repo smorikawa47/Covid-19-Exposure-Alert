@@ -96,6 +96,15 @@ public class Main {
     return "diningreport";
   }
 
+  // // 
+  /*Do we need this ? Done by Tauseef Added this 05.06 */
+  @PostMapping("/diningreportpage")
+  public String diningReportPage(Map <String, Object> model){
+    Person person = new Person();
+    model.put("person",person);
+    return "diningreport"; //diningreport.html
+  }
+
   @GetMapping("/adminlogin")
   public String adminLogin(Map<String, Object> model){
     Restaurant restaurant = new Restaurant();
