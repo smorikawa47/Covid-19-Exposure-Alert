@@ -11,23 +11,22 @@
     <div class="backdropDiv">
         <div class = "mainDiv">
             <div class = "reportDiningDiv">
-                <h1>Where are you dining tonight?</h1>
+                <h1>Please fill out the form below before sitting down!</h1>
             </div>
-
-             <!-- Need to add form (added by Tauseef 05.07)
-                See person.java            -->
-            
-            <!-- ADDED BELOW--->
-            <form id="customer_id_form" action="#" method="post" th:action=@{/diningreportpage} th:object="${person}"> <!--shuold be person-->
+            <form id="customer_id_form" action="#" method="post" th:action=@{/diningreport} th:object="${dining}">
                 <label>
-                    First Name <br>
-                    <input type = "text" autocomplete=off th:field=*{fname} placeholder="First Name" required> <!--customer first name-->
+                    Name <br>
+                    <input type = "text" autocomplete=off th:field=*{dinerName} placeholder="Name" required> <!--customer name-->
                 </label>
-
                 <label>
-                    Last Name <br>
-                    <input type = "text" autocomplete=off th:field=*{lname} placeholder="Last Name" required> <!--customer last name-->
+                    Restaurant <br>
+                    <input type = "text" autocomplete="off" th:field=*{restaurant} placeholder="Restaurant" required> <!-- the restaurant of the dining. we will later try to do this automatically. -->
                 </label>
+                <label>
+                    Email <br>
+                    <input type = "text" autocomplete=off th:field=*{dinerEmail} placeholder="Email" required> <!--customer email-->
+                </label>
+                <input type = "submit" value="Submit">
             </form>
             
             <!-- back page button-->
