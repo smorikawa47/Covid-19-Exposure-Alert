@@ -53,8 +53,6 @@ public class Main {
 
   @RequestMapping("/")
   String index(Map<String, Object> model) {
-    String name = "Gaelan";
-    model.put("name", name);
     return "index";
   }
 
@@ -85,6 +83,102 @@ public class Main {
       return "error";
     }
 
+  }
+
+  @GetMapping("/home")
+  public String getAdminHomePage(Map<String, Object> model, Restaurant restaurant){
+    model.put("restaurant", restaurant);
+    return "home";
+  }
+
+  @GetMapping("/diningreport")
+  public String diningReport(Map<String, Object> model){
+    return "diningreport";
+  }
+
+  @GetMapping("/adminlogin")
+  public String adminLogin(Map<String, Object> model){
+    Restaurant restaurant = new Restaurant();
+    model.put("restaurant", restaurant);
+    return "adminlogin";
+  }
+
+  @PostMapping("/adminloginpage")
+  public String adminLoginPage(Map<String, Object> model){
+    Restaurant restaurant = new Restaurant();
+    model.put("restaurant", restaurant);
+    return "adminlogin";
+  }
+
+  @PostMapping("/createadminaccountpage")
+  public String prepareNewAdminAccountForm(Map<String, Object> model){
+    Restaurant restaurant = new Restaurant();
+    model.put("restaurant", restaurant);
+    return "createadminaccount";
+  }
+
+  @GetMapping("/createadminaccount")
+  public String prepareToSubmitNewRestaurant(Map<String, Object> model){
+    Restaurant restaurant = new Restaurant();
+    model.put("restaurant", restaurant);
+    return "createadminaccount";
+  }
+
+  @PostMapping("/createadminaccount")
+  public String createAdminAccount(Map<String, Object> model, Restaurant restaurant){
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Restaurants (id serial, name varchar(30), username varchar(16), password varchar(30), premium boolean)");
+      String sql = "INSERT INTO Restaurants (name,username,password,premium) VALUES ('" + restaurant.getName() + "', '" + restaurant.getUsername() + "', '" + restaurant.getPassword() + "', " + restaurant.getPremiumStatus() + ")";
+      System.out.println(sql);
+      stmt.executeUpdate(sql);
+      model.put("restaurant", restaurant);
+      return "redirect:/home";
+    }  catch (Exception e) {
+      model.put("message", e.getMessage());
+      return "error";
+    }
+  }
+
+  @PostMapping(
+    path = "/adminlogin",
+    consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE}
+    )
+  public String loginToAdminAccount(Map<String, Object> model, Restaurant restaurant) throws Exception {
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      Restaurant r = new Restaurant();
+      r.setName(restaurant.getName());
+      r.setUsername(restaurant.getUsername());
+      r.setPassword(restaurant.getPassword());
+      r.setPremiumStatus(restaurant.getPremiumStatus());
+      System.out.println(r);
+      stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Restaurants (id serial, name varchar(30), username varchar(16), password varchar(30), premium boolean)");
+      String sql = "SELECT * FROM Restaurants WHERE username = '" + restaurant.getUsername() + "'";
+      System.out.println(sql);
+      ResultSet queriedUser = stmt.executeQuery(sql);
+
+      if(!queriedUser.isBeforeFirst()){
+        String message = "Username not found in system.";
+        model.put("message", message);
+        return "adminlogin";
+      }
+      queriedUser.next();
+      
+      String queriedPassword = queriedUser.getString("password");
+      System.out.println(queriedPassword);
+      System.out.println(restaurant.getPassword());
+      if(!(restaurant.getPassword().equals(queriedPassword))){
+        String message = "Password does not match.";
+        model.put("message", message);
+        return "adminlogin";
+      }
+      model.put("restaurant", restaurant);
+      return "redirect:/home";
+    }  catch (Exception e) {
+      model.put("message", e.getMessage());
+      return "error";
+    }
   }
 
   @GetMapping("/person/success")
