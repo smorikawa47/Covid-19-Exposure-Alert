@@ -97,7 +97,7 @@ public class Main {
       System.out.println(sql);
       stmt.executeUpdate(sql);
       model.put("dining", dining);
-      return "redirect:/home";
+      return "redirect:/thankyou";
     }  catch (Exception e) {
       model.put("message", e.getMessage());
       return "error";
