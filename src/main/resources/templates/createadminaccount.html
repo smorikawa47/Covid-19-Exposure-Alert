@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" th:href="@{/stylesheets/DineAlert.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/stylesheets/DineAlert_gaelan.css}">
     <title>DineAlert</title>
 </head>
 <body>
@@ -32,12 +32,12 @@
                 </div>
             </div>
             <form id = "backToUserSelect" th:action = "@{/}" method="post">
-                <td><input type ="submit" value="Return to home" class = "backButton"/></td>
+                <td><input type ="submit" value="Return to Homepage" class = "backButton"/></td>
             </form>
 
              <!-- added by Tauseef on 05.07 so can go back to login page as well-->
-            <form id = "backtoAdminLoginPage" th:action=@{/adminloginpage}" method="POST"> 
-                <td><input type ="submit" value="Return to home" class = "backButton"/></td>
+            <form id = "backtoAdminLoginPage" th:action="@{/adminloginpage}" method="POST"> 
+                <td><input type ="submit" value="Back to Admin Login" class = "backButton"/></td>
             </form> 
             
         </div>

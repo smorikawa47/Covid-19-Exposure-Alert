@@ -66,6 +66,9 @@ public class Main {
   }
 
   @GetMapping("/thankyou")
+  public String thankDinerForReport(Map<String, Object> model){
+    return "thankyou";
+  }
 
   @GetMapping("/diningreport")
   public String diningReport(Map<String, Object> model){
