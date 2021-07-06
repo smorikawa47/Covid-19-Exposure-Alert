@@ -35,6 +35,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.time.*;
 import java.sql.Time;
@@ -151,8 +152,36 @@ public class Main {
         model.put("message", message);
         return "adminlogin";
       }
-      model.put("restaurant", restaurant);
-      return "redirect:/home";
+      //Andy: query diner information
+      //System.out.println("SELECT * FROM Dinings WHERE restaurant = '"+ restaurant.getName() +"'");
+      ResultSet restaurants = stmt.executeQuery("SELECT * FROM Restaurants WHERE username = '"+restaurant.getUsername()+"'");
+      String restaurantName = "";
+      while(restaurants.next()) {
+        restaurantName = restaurants.getString("name");
+      }
+      //System.out.println("restaurant name is : ");
+      //System.out.println(restaurantName);
+      ResultSet diner = stmt.executeQuery("SELECT * FROM Dinings WHERE restaurant = '" +restaurantName+ "'");
+      List<List<String>> recs = new ArrayList<>();
+      while(diner.next()){
+        String id = diner.getString("id");
+        String name = diner.getString("name");
+        String email = diner.getString("email");
+        String time = diner.getString("time");
+        String date = diner.getString("date");
+        ArrayList<String> rec = new ArrayList<>();
+        rec.add(id);
+        rec.add(name);
+        rec.add(email);
+        rec.add(time);
+        rec.add(date);
+        recs.add(rec);
+      }
+      model.put("recs", recs);
+
+      //model.put("restaurant", restaurant);
+      //return "redirect:/home";
+      return "home";
     }  catch (Exception e) {
       model.put("message", e.getMessage());
       return "error";
@@ -181,8 +210,28 @@ public class Main {
       String sql = "INSERT INTO Restaurants (name,username,password,premium) VALUES ('" + restaurant.getName() + "', '" + restaurant.getUsername() + "', '" + restaurant.getPassword() + "', " + restaurant.getPremiumStatus() + ")";
       System.out.println(sql);
       stmt.executeUpdate(sql);
-      model.put("restaurant", restaurant);
-      return "redirect:/home";
+      //model.put("restaurant", restaurant);
+
+      //Andy: query diner information associated with restaurant name
+      //System.out.println("SELECT * FROM Dinings WHERE restaurant = '"+ restaurant.getName() +"'");
+      ResultSet diner = stmt.executeQuery("SELECT * FROM Dinings WHERE restaurant = '"+ restaurant.getName() +"'");
+        List<List<String>> recs = new ArrayList<>();
+        while(diner.next()){
+          String id = diner.getString("id");
+        String name = diner.getString("name");
+        String email = diner.getString("email");
+        String time = diner.getString("time");
+        String date = diner.getString("date");
+        ArrayList<String> rec = new ArrayList<>();
+        rec.add(id);
+        rec.add(name);
+        rec.add(email);
+        rec.add(time);
+        rec.add(date);
+        recs.add(rec);
+      }
+      model.put("recs", recs);
+      return "home";
     }  catch (Exception e) {
       model.put("message", e.getMessage());
       return "error";
