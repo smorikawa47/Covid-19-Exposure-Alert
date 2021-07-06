@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" th:href="@{/stylesheets/DineAlert_gaelan.css}">
+    <title>DineAlert</title>
+</head>
+<body>
+    <div class="backdropDiv">
+        <div class = "mainDiv">
+            <div class = "reportDiningDiv">
+                <h1>Please fill out the form below before sitting down!</h1>
+            </div>
+            <form id="customer_id_form" action="#" method="post" th:action=@{/diningreport} th:object="${dining}">
+                <label>
+                    Name <br>
+                    <input type = "text" autocomplete=off th:field=*{dinerName} placeholder="Name" required> <!--customer name-->
+                </label>
+                <label>
+                    Restaurant <br>
+                    <input type = "text" autocomplete="off" th:field=*{restaurant} placeholder="Restaurant" required> <!-- the restaurant of the dining. we will later try to do this automatically. -->
+                </label>
+                <label>
+                    Email <br>
+                    <input type = "text" autocomplete=off th:field=*{dinerEmail} placeholder="Email" required> <!--customer email-->
+                </label>
+                <input type = "submit" value="Submit">
+            </form>
+            
+            <!-- back page button-->
+            <form id = "backToUserSelect" th:action = "@{/}" method="post">
+                <td><input type ="submit" value="Return to home" class = "backButton"/></td>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

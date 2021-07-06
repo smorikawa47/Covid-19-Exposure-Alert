@@ -1,22 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" th:href="@{/stylesheets/DineAlert_gaelan.css}">
+    <title>Welcome to DineAlert!</title>
 </head>
 <body>
-  Hello (test)
-  <p th:text="${name}"></p>
-
-  <form id="login_form" action="#" method="post"> 
-    User Name: <input type="email" placeholder="email"></input> <br>
-    Password: <input type="password" placeholder="Password"></input> 
-    <br>
-  </form>
-
-  <button type="submit">LOGIN</button>  
-  
+  <div class="backdropDiv">
+        <div class = "mainDiv">
+          <h1 class="welcomeHeader">Welcome to DineAlert!</h1>
+            <div class = "userTypesDiv">
+                <table class = "userTypesTable">
+                  <tr></tr>
+                  <tr></tr>
+                  <tr></tr>
+                    <tr>
+                      <form id = "userLoginButtonForm" th:action = "@{/diningreportpage}" method="post">
+                        <td><input type="submit" value="I am dining!" class="userButton"/> 
+                      </form>
+                        <td></td>
+                      <form id = "adminLoginButtonForm" th:action = "@{/adminloginpage}" method="post">
+                        <td><input type ="submit" value="I am running a restaurant!" class = "adminButton"/></td>
+                      </form>
+                    </tr>
+                </table>
+            </div>
+        </div>
+  </div>
 </body>
 </html>

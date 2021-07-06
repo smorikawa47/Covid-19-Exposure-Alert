@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" th:href="@{/stylesheets/DineAlert_gaelan.css}">
+    <title>DineAlert</title>
+</head>
+<body>
+  <div class="backdropDiv">
+        <div class = "mainDiv">
+          <h1 class="welcomeHeader">Thank you! Enjoy your meal.</h1>
+          <form id = "backToUserSelect" th:action = "@{/}" method="post">
+            <td><input type ="submit" value="Return to home" class = "backButton"/></td>
+        </form>
+        </div>
+  </div>
+</body>
+</html>
