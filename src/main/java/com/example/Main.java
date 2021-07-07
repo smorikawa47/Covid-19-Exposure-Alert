@@ -105,15 +105,16 @@ public class Main {
     }
   }
 
+    // Is this even in use?? -Markus
+    @PostMapping("/adminloginpage")
+    public String adminLoginPage(Map<String, Object> model){
+      Restaurant restaurant = new Restaurant();
+      model.put("restaurant", restaurant);
+      return "adminlogin";
+    }
+
   @GetMapping("/adminlogin")
   public String adminLogin(Map<String, Object> model){
-    Restaurant restaurant = new Restaurant();
-    model.put("restaurant", restaurant);
-    return "adminlogin";
-  }
-
-  @PostMapping("/adminloginpage")
-  public String adminLoginPage(Map<String, Object> model){
     Restaurant restaurant = new Restaurant();
     model.put("restaurant", restaurant);
     return "adminlogin";
@@ -187,6 +188,25 @@ public class Main {
       return "error";
     }
   }
+
+  @GetMapping("/home/deleted/{id}")
+  public String getSpecificDiner(Map<String, Object> model, @PathVariable String id){
+    System.out.println(id);
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      stmt.executeUpdate("DELETE FROM Dinings WHERE id=" + id);
+      
+      
+        model.put("id", id);
+      
+
+      return "deleted";
+    } catch (Exception e) {
+      model.put("message", e.getMessage());
+      return "error";
+    }
+}
+
 
   @PostMapping("/createadminaccountpage")
   public String prepareNewAdminAccountForm(Map<String, Object> model){
