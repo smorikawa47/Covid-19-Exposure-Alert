@@ -207,7 +207,18 @@ public class Main {
     try (Connection connection = dataSource.getConnection()) {
       Statement stmt = connection.createStatement();
       stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Restaurants (id serial, name varchar(30), username varchar(16), password varchar(30), premium boolean)");
-      String sql = "INSERT INTO Restaurants (name,username,password,premium) VALUES ('" + restaurant.getName() + "', '" + restaurant.getUsername() + "', '" + restaurant.getPassword() + "', " + restaurant.getPremiumStatus() + ")";
+      
+      //Check if the requested username exists in the database
+      String sql = "SELECT * FROM Restaurants WHERE username = '" + restaurant.getUsername() + "'";
+      ResultSet restaurantsWithMatchingName = stmt.executeQuery(sql);
+      if(restaurantsWithMatchingName.isBeforeFirst()){
+        String message = "Username already exists, please try another.";
+        model.put("message", message);
+        return "createadminaccount";
+      }
+      restaurantsWithMatchingName.next();
+
+      sql = "INSERT INTO Restaurants (name,username,password,premium) VALUES ('" + restaurant.getName() + "', '" + restaurant.getUsername() + "', '" + restaurant.getPassword() + "', " + restaurant.getPremiumStatus() + ")";
       System.out.println(sql);
       stmt.executeUpdate(sql);
       //model.put("restaurant", restaurant);
