@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -10,30 +10,39 @@
 <body>
     <div class="backdropDiv">
         <div class = "mainDiv">
-            <h1>Please log in to your DineAlert account.</h1>
+            <h1>Register yourself on DineAlert!</h1>
             <div class = "reportDiningDiv">
-                <form id="adminLoginForm" action="#" method="post" th:action=@{/adminlogin} th:object="${restaurant}">
+                <form id="newDinerAccountForm" action="#" method="post" th:action=@{/createdineraccount} th:object="${diner}">
                     <label>
                         Username <br>
                         <input type = "text" autocomplete=off th:field=*{username} placeholder="Username" required>
                     </label>
                     <label>
+                        Name <br>
+                        <input type = "text" autocomplete=off th:field=*{name} placeholder="Name" required>
+                    </label>
+                    <label>
+                        Email <br>
+                        <input type = "email" th:field=*{email} required>
+                    </label>
+                    <label>
                         Password <br>
                         <input type = "password" th:field=*{password} required>
                     </label>
-                    <input type = "submit" value="Log in">
+                    <input type = "submit" value="Create account">
                 </form>
-                <div id="loginMessagesDiv">
+                <div id="CreateAccountMessagesDiv">
                     <p th:text="${message}"></p>
                 </div>
             </div>
             <form id = "backToUserSelect" th:action = "@{/}" method="post">
-                <td><input type ="submit" value="Return to home" class = "backButton"/></td>
+                <td><input type ="submit" value="Return to Homepage" class = "backButton"/></td>
             </form>
-            <br> <!--- add a break buetween buttons 05.06-->
-            <form th:action = @{/createadminaccountpage} method="post">
-                <td><input type ="submit" value="Create account" class = "createAccountButton"/></td>
-            </form>
+
+            <form id = "backtoDinerLoginPage" th:action="@{/dinerloginpage}" method="POST"> 
+                <td><input type ="submit" value="Back to Diner Login" class = "backButton"/></td>
+            </form> 
+            
         </div>
     </div>
 </body>

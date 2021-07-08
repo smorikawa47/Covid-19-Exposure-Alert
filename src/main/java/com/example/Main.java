@@ -35,6 +35,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.time.*;
 import java.sql.Time;
@@ -69,6 +70,115 @@ public class Main {
   public String thankDinerForReport(Map<String, Object> model){
     return "thankyou";
   }
+
+  @GetMapping("/dinerlogin")
+  public String dinerLogin(Map<String, Object> model){
+    Diner diner = new Diner();
+    model.put("diner", diner);
+    return "dinerlogin";
+  }
+
+  @PostMapping("/dinerloginpage")
+  public String dinerLoginPage(Map<String, Object> model){
+    Diner diner = new Diner();
+    model.put("diner", diner);
+    return "dinerlogin";
+  }
+
+  @PostMapping(
+    path = "/dinerlogin",
+    consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE}
+    )
+  public String loginToDinerAccount(Map<String, Object> model, Diner diner) throws Exception {
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      Diner d = new Diner();
+      d.setUsername(diner.getUsername());
+      d.setName(diner.getName());
+      d.setEmail(diner.getEmail());
+      d.setPassword(diner.getPassword());
+      System.out.println(d);
+      stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Diners (id serial, username varchar(30), name varchar(16), email varchar(30), password varchar(30), exposed boolean, exposure date)");
+      String sql = "SELECT * FROM Diners WHERE username = '" + diner.getUsername() + "'";
+      System.out.println(sql);
+      ResultSet queriedUser = stmt.executeQuery(sql);
+
+      if(!queriedUser.isBeforeFirst()){
+        String message = "Username not found in system.";
+        model.put("message", message);
+        return "dinerlogin";
+      }
+      queriedUser.next();
+      
+      String queriedPassword = queriedUser.getString("password");
+      System.out.println(queriedPassword);
+      System.out.println(diner.getPassword());
+      if(!(diner.getPassword().equals(queriedPassword))){
+        String message = "Password does not match.";
+        model.put("message", message);
+        return "dinerlogin";
+      }
+      
+      model.put("diner", d);
+      return "redirect:/diningreport";
+
+    }  catch (Exception e) {
+      model.put("message", e.getMessage());
+      return "error";
+    }
+  }
+
+  @PostMapping("/createdineraccountpage")
+  public String prepareNewDinerAccountForm(Map<String, Object> model){
+    Diner diner = new Diner();
+    model.put("diner", diner);
+    return "createdineraccount";
+  }
+
+  @GetMapping("/createdineraccount")
+  public String prepareToCreateNewDiner(Map<String, Object> model){
+    Diner diner = new Diner();
+    model.put("diner", diner);
+    return "createdineraccount";
+  }
+
+  @PostMapping("/createdineraccount")
+  public String createDinerAccount(Map<String, Object> model, Diner diner){
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Diners (id serial, username varchar(30), name varchar(16), email varchar(30), password varchar(30), exposed boolean, exposure date)");
+      
+      //Check if the requested username exists in the database
+      String sql = "SELECT * FROM Diners WHERE username = '" + diner.getUsername() + "'";
+      ResultSet dinersWithMatchingName = stmt.executeQuery(sql);
+      if(dinersWithMatchingName.isBeforeFirst()){
+        String message = "Username already exists, please try another.";
+        model.put("message", message);
+        return "createdineraccount";
+      }
+      dinersWithMatchingName.next();
+
+      //Check if the requested email exists in the database
+      sql = "SELECT * FROM Diners WHERE email = '" + diner.getEmail() + "'";
+      ResultSet dinersWithMatchingEmail = stmt.executeQuery(sql);
+      if(dinersWithMatchingEmail.isBeforeFirst()){
+        String message = "Email already registered, please try another.";
+        model.put("message", message);
+        return "createdineraccount";
+      }
+      dinersWithMatchingEmail.next();
+
+      sql = "INSERT INTO Diners (username,name,email,password,exposed) VALUES ('" + diner.getUsername() + "', '" + diner.getName() + "', '" + diner.getEmail() + "', '" + diner.getPassword() + "', " + diner.wasExposed() + ")";
+      System.out.println(sql);
+      stmt.executeUpdate(sql);
+      model.put("diner", diner);
+      return "redirect:/diningreport";
+    }  catch (Exception e) {
+      model.put("message", e.getMessage());
+      return "error";
+    }
+  }
+
 
   @GetMapping("/diningreport")
   public String diningReport(Map<String, Object> model){
@@ -151,8 +261,36 @@ public class Main {
         model.put("message", message);
         return "adminlogin";
       }
-      model.put("restaurant", restaurant);
-      return "redirect:/home";
+      //Andy: query diner information
+      //System.out.println("SELECT * FROM Dinings WHERE restaurant = '"+ restaurant.getName() +"'");
+      ResultSet restaurants = stmt.executeQuery("SELECT * FROM Restaurants WHERE username = '"+restaurant.getUsername()+"'");
+      String restaurantName = "";
+      while(restaurants.next()) {
+        restaurantName = restaurants.getString("name");
+      }
+      //System.out.println("restaurant name is : ");
+      //System.out.println(restaurantName);
+      ResultSet diner = stmt.executeQuery("SELECT * FROM Dinings WHERE restaurant = '" +restaurantName+ "'");
+      List<List<String>> recs = new ArrayList<>();
+      while(diner.next()){
+        String id = diner.getString("id");
+        String name = diner.getString("name");
+        String email = diner.getString("email");
+        String time = diner.getString("time");
+        String date = diner.getString("date");
+        ArrayList<String> rec = new ArrayList<>();
+        rec.add(id);
+        rec.add(name);
+        rec.add(email);
+        rec.add(time);
+        rec.add(date);
+        recs.add(rec);
+      }
+      model.put("recs", recs);
+
+      //model.put("restaurant", restaurant);
+      //return "redirect:/home";
+      return "home";
     }  catch (Exception e) {
       model.put("message", e.getMessage());
       return "error";
@@ -178,11 +316,42 @@ public class Main {
     try (Connection connection = dataSource.getConnection()) {
       Statement stmt = connection.createStatement();
       stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Restaurants (id serial, name varchar(30), username varchar(16), password varchar(30), premium boolean)");
-      String sql = "INSERT INTO Restaurants (name,username,password,premium) VALUES ('" + restaurant.getName() + "', '" + restaurant.getUsername() + "', '" + restaurant.getPassword() + "', " + restaurant.getPremiumStatus() + ")";
+      
+      //Check if the requested username exists in the database
+      String sql = "SELECT * FROM Restaurants WHERE username = '" + restaurant.getUsername() + "'";
+      ResultSet restaurantsWithMatchingName = stmt.executeQuery(sql);
+      if(restaurantsWithMatchingName.isBeforeFirst()){
+        String message = "Username already exists, please try another.";
+        model.put("message", message);
+        return "createadminaccount";
+      }
+      restaurantsWithMatchingName.next();
+
+      sql = "INSERT INTO Restaurants (name,username,password,premium) VALUES ('" + restaurant.getName() + "', '" + restaurant.getUsername() + "', '" + restaurant.getPassword() + "', " + restaurant.getPremiumStatus() + ")";
       System.out.println(sql);
       stmt.executeUpdate(sql);
-      model.put("restaurant", restaurant);
-      return "redirect:/home";
+      //model.put("restaurant", restaurant);
+
+      //Andy: query diner information associated with restaurant name
+      //System.out.println("SELECT * FROM Dinings WHERE restaurant = '"+ restaurant.getName() +"'");
+      ResultSet diner = stmt.executeQuery("SELECT * FROM Dinings WHERE restaurant = '"+ restaurant.getName() +"'");
+        List<List<String>> recs = new ArrayList<>();
+        while(diner.next()){
+          String id = diner.getString("id");
+        String name = diner.getString("name");
+        String email = diner.getString("email");
+        String time = diner.getString("time");
+        String date = diner.getString("date");
+        ArrayList<String> rec = new ArrayList<>();
+        rec.add(id);
+        rec.add(name);
+        rec.add(email);
+        rec.add(time);
+        rec.add(date);
+        recs.add(rec);
+      }
+      model.put("recs", recs);
+      return "home";
     }  catch (Exception e) {
       model.put("message", e.getMessage());
       return "error";

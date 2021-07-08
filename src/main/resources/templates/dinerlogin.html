@@ -12,7 +12,7 @@
         <div class = "mainDiv">
             <h1>Please log in to your DineAlert account.</h1>
             <div class = "reportDiningDiv">
-                <form id="adminLoginForm" action="#" method="post" th:action=@{/adminlogin} th:object="${restaurant}">
+                <form id="dinerLoginForm" action="#" method="post" th:action=@{/dinerlogin} th:object="${diner}">
                     <label>
                         Username <br>
                         <input type = "text" autocomplete=off th:field=*{username} placeholder="Username" required>
@@ -31,8 +31,8 @@
                 <td><input type ="submit" value="Return to home" class = "backButton"/></td>
             </form>
             <br> <!--- add a break buetween buttons 05.06-->
-            <form th:action = @{/createadminaccountpage} method="post">
-                <td><input type ="submit" value="Create account" class = "createAccountButton"/></td>
+            <form th:action = @{/createdineraccountpage} method="post">
+                <td><input type ="submit" value="Register with DineAlert" class = "createAccountButton"/></td>
             </form>
         </div>
     </div>
