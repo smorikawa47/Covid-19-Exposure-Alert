@@ -153,20 +153,20 @@ public class Main {
       ResultSet dinersWithMatchingName = stmt.executeQuery(sql);
       if(dinersWithMatchingName.isBeforeFirst()){
         String message = "Username already exists, please try another.";
-        dinersWithMatchingName.next();
         model.put("message", message);
         return "createdineraccount";
       }
+      dinersWithMatchingName.next();
 
       //Check if the requested email exists in the database
       sql = "SELECT * FROM Diners WHERE email = '" + diner.getEmail() + "'";
       ResultSet dinersWithMatchingEmail = stmt.executeQuery(sql);
       if(dinersWithMatchingEmail.isBeforeFirst()){
         String message = "Email already registered, please try another.";
-        dinersWithMatchingEmail.next();
         model.put("message", message);
         return "createdineraccount";
       }
+      dinersWithMatchingEmail.next();
 
       sql = "INSERT INTO Diners (username,name,email,password,exposed) VALUES ('" + diner.getUsername() + "', '" + diner.getName() + "', '" + diner.getEmail() + "', '" + diner.getPassword() + "', " + diner.wasExposed() + ")";
       System.out.println(sql);
