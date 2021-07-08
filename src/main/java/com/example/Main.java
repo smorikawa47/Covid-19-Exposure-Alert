@@ -214,15 +214,16 @@ public class Main {
     }
   }
 
+    // Is this even in use?? -Markus
+    @PostMapping("/adminloginpage")
+    public String adminLoginPage(Map<String, Object> model){
+      Restaurant restaurant = new Restaurant();
+      model.put("restaurant", restaurant);
+      return "adminlogin";
+    }
+
   @GetMapping("/adminlogin")
   public String adminLogin(Map<String, Object> model){
-    Restaurant restaurant = new Restaurant();
-    model.put("restaurant", restaurant);
-    return "adminlogin";
-  }
-
-  @PostMapping("/adminloginpage")
-  public String adminLoginPage(Map<String, Object> model){
     Restaurant restaurant = new Restaurant();
     model.put("restaurant", restaurant);
     return "adminlogin";
@@ -268,8 +269,6 @@ public class Main {
       while(restaurants.next()) {
         restaurantName = restaurants.getString("name");
       }
-      //System.out.println("restaurant name is : ");
-      //System.out.println(restaurantName);
       ResultSet diner = stmt.executeQuery("SELECT * FROM Dinings WHERE restaurant = '" +restaurantName+ "'");
       List<List<String>> recs = new ArrayList<>();
       while(diner.next()){
@@ -296,6 +295,43 @@ public class Main {
       return "error";
     }
   }
+
+  @GetMapping("/home/deleted/{id}")
+  public String getSpecificDiner(Map<String, Object> model, @PathVariable String id){
+    System.out.println(id);
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      ResultSet restaurant_name = stmt.executeQuery("SELECT * FROM Dinings WHERE id=" + id);
+      Statement st = connection.createStatement();
+      st.executeUpdate("DELETE FROM Dinings WHERE id='"+id+"'");
+      String restaurantName = "";
+      while(restaurant_name.next()){
+        restaurantName = restaurant_name.getString("restaurant");
+      }
+      ResultSet diner = stmt.executeQuery("SELECT * FROM Dinings WHERE restaurant = '" +restaurantName+ "'");
+      List<List<String>> recs = new ArrayList<>();
+      while(diner.next()){
+        String idNew = diner.getString("id");
+        String name = diner.getString("name");
+        String email = diner.getString("email");
+        String time = diner.getString("time");
+        String date = diner.getString("date");
+        ArrayList<String> rec = new ArrayList<>();
+        rec.add(idNew);
+        rec.add(name);
+        rec.add(email);
+        rec.add(time);
+        rec.add(date);
+        recs.add(rec);
+      }
+      model.put("recs", recs);
+      return "home";
+    } catch (Exception e) {
+      model.put("message", e.getMessage());
+      return "error";
+    }
+}
+
 
   @PostMapping("/createadminaccountpage")
   public String prepareNewAdminAccountForm(Map<String, Object> model){

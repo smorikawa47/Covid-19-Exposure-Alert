@@ -11,7 +11,8 @@
   <div class="backdropDiv">
         <div class = "mainDiv">
           <h1 class="welcomeHeader">Logged in!</h1>
-            <p th:text="${restaurant.getName()}"></p>
+          <!-- I think this was implemented when we were testing and restaurant no longer gets passed -Markus -->
+            <!--<p th:text="${restaurant.getName()}"></p>-->
             <h2>Diner Information</h2>
             <table>
                 <tr>
@@ -27,24 +28,14 @@
                     <td><th:block th:text="${rec[2]}"/> </td>
                     <td><th:block th:text="${rec[3]}"/> </td>
                     <td><th:block th:text="${rec[4]}"/> </td>
+                    <td>
+                        <a th:href="@{'/home/deleted/' + ${rec[0]}}" th:text="DELETE"></a>
+                    </td>
                 </tr>
             </table>
-
-
-        <!--- create buttons to go back 06.07 (added 9:25 pm) by tauseef-->
-
-          <form id = "backToUserSelect" th:action = "@{/}" method="post">
-              <td><input type ="submit" value="Return to home" class = "backButton"/></td>
-          </form>
-
-          <br> <!--- added break between pages-->
-          <form id = "backToUserSelect" th:action = "@{/adminloginpage}" method="post">
-            <td><input type ="submit" value="Return to admin login" class = "backButton"/></td>
-        </form>
-
-            </div>
-        </div>
-
+            <form id = "LogOutAdmin" th:action = "@{/}" method="post">
+                <td><input type ="submit" value="Log Out" class = "backButton"/></td>
+            </form>
         
   </div>
 </body>
