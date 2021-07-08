@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" th:href="@{/stylesheets/DineAlert_gaelan.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/stylesheets/home.css}">
     <title>Dine Alert Admin Page</title>
 </head>
 <body>
@@ -29,8 +29,23 @@
                     <td><th:block th:text="${rec[4]}"/> </td>
                 </tr>
             </table>
+
+
+        <!--- create buttons to go back 06.07 (added 9:25 pm) by tauseef-->
+
+          <form id = "backToUserSelect" th:action = "@{/}" method="post">
+              <td><input type ="submit" value="Return to home" class = "backButton"/></td>
+          </form>
+
+          <br> <!--- added break between pages-->
+          <form id = "backToUserSelect" th:action = "@{/adminloginpage}" method="post">
+            <td><input type ="submit" value="Return to admin login" class = "backButton"/></td>
+        </form>
+
             </div>
         </div>
+
+        
   </div>
 </body>
 </html>
