@@ -188,7 +188,7 @@ public class Main {
   }
 
   // // 
-  /*Do we need this ? Done by Tauseef Added this 05.06 */
+  /*Do we need this ? Done by Tauseef Added this 05.07 */
   @PostMapping("/diningreportpage")
   public String diningReportPage(Map <String, Object> model){
     Dining dining = new Dining();
