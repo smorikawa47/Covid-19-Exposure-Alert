@@ -26,6 +26,27 @@
 
   <dependencies>
     <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>activation</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/src/main/java/com/example/activation.jar</systemPath>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>mail</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/src/main/java/com/example/mail.jar</systemPath>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>smtp</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/src/main/java/com/example/smtp.jar</systemPath>
+    </dependency>
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>

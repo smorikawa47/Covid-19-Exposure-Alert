@@ -295,7 +295,12 @@ public class Main {
       return "error";
     }
   }
-
+  @GetMapping("/home/sendEmail/{email}")
+  public String sendEmail(Map<String, Object> model, @PathVariable String email){
+    //System.out.println("testing eamil, the email is: "+email);
+      SendEmail send = new SendEmail();
+      return "home";
+  }
   @GetMapping("/home/deleted/{id}")
   public String getSpecificDiner(Map<String, Object> model, @PathVariable String id){
     System.out.println(id);
