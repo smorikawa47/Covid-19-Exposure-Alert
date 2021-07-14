@@ -41,6 +41,16 @@ import java.time.*;
 import java.sql.Time;
 import java.sql.Date;
 
+import javax.mail.Authenticator;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+
 @Controller
 @SpringBootApplication
 public class Main {
@@ -187,13 +197,11 @@ public class Main {
     return "diningreport";
   }
 
-  // // 
-  /*Do we need this ? Done by Tauseef Added this 05.06 */
   @PostMapping("/diningreportpage")
   public String diningReportPage(Map <String, Object> model){
     Dining dining = new Dining();
     model.put("dining", dining);
-    return "diningreport"; //diningreport.html
+    return "diningreport";
   }
 
   @PostMapping("/diningreport")
@@ -214,7 +222,7 @@ public class Main {
     }
   }
 
-    // Is this even in use?? -Markus
+
     @PostMapping("/adminloginpage")
     public String adminLoginPage(Map<String, Object> model){
       Restaurant restaurant = new Restaurant();
@@ -262,8 +270,6 @@ public class Main {
         model.put("message", message);
         return "adminlogin";
       }
-      //Andy: query diner information
-      //System.out.println("SELECT * FROM Dinings WHERE restaurant = '"+ restaurant.getName() +"'");
       ResultSet restaurants = stmt.executeQuery("SELECT * FROM Restaurants WHERE username = '"+restaurant.getUsername()+"'");
       String restaurantName = "";
       while(restaurants.next()) {
@@ -287,20 +293,22 @@ public class Main {
       }
       model.put("recs", recs);
 
-      //model.put("restaurant", restaurant);
-      //return "redirect:/home";
       return "home";
     }  catch (Exception e) {
       model.put("message", e.getMessage());
       return "error";
     }
   }
-  @GetMapping("/home/sendEmail/{email}")
-  public String sendEmail(Map<String, Object> model, @PathVariable String email){
-    //System.out.println("testing eamil, the email is: "+email);
-      SendEmail send = new SendEmail();
-      return "home";
+
+  @GetMapping("/home/sendEmail")
+  public String sendEmail(){
+    System.out.println("testing email function!!!!!!!!!!!!!!!!");
+    SendEmail send = new SendEmail();
+    send.set_receiverEmail("zta23@sfu.ca");
+    send.sendalertEmail();
+    return "home";
   }
+
   @GetMapping("/home/deleted/{id}")
   public String getSpecificDiner(Map<String, Object> model, @PathVariable String id){
     System.out.println(id);
@@ -371,10 +379,6 @@ public class Main {
       sql = "INSERT INTO Restaurants (name,username,password,premium) VALUES ('" + restaurant.getName() + "', '" + restaurant.getUsername() + "', '" + restaurant.getPassword() + "', " + restaurant.getPremiumStatus() + ")";
       System.out.println(sql);
       stmt.executeUpdate(sql);
-      //model.put("restaurant", restaurant);
-
-      //Andy: query diner information associated with restaurant name
-      //System.out.println("SELECT * FROM Dinings WHERE restaurant = '"+ restaurant.getName() +"'");
       ResultSet diner = stmt.executeQuery("SELECT * FROM Dinings WHERE restaurant = '"+ restaurant.getName() +"'");
         List<List<String>> recs = new ArrayList<>();
         while(diner.next()){

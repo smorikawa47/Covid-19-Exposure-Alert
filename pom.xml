@@ -14,7 +14,6 @@
     <relativePath/>
   </parent>
   <name>java-getting-started</name>
-
   <properties>
     <java.version>1.8</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -26,25 +25,25 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.example</groupId>
+      <groupId>javax.activation</groupId>
       <artifactId>activation</artifactId>
-      <version>1.0</version>
       <scope>system</scope>
-      <systemPath>${project.basedir}/src/main/java/com/example/activation.jar</systemPath>
+      <version>1.1.1</version>
+      <systemPath>${project.basedir}/libs/activation.jar</systemPath>
     </dependency>
     <dependency>
-      <groupId>com.example</groupId>
+      <groupId>javax.mail</groupId>
       <artifactId>mail</artifactId>
-      <version>1.0</version>
+      <version>1.4.5</version>
       <scope>system</scope>
-      <systemPath>${project.basedir}/src/main/java/com/example/mail.jar</systemPath>
+      <systemPath>${project.basedir}/libs/mail.jar</systemPath>
     </dependency>
     <dependency>
-      <groupId>com.example</groupId>
+      <groupId>javax.mail.smtp</groupId>
       <artifactId>smtp</artifactId>
-      <version>1.0</version>
+      <version>1.4.5</version>
       <scope>system</scope>
-      <systemPath>${project.basedir}/src/main/java/com/example/smtp.jar</systemPath>
+      <systemPath>${project.basedir}/libs/smtp.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>

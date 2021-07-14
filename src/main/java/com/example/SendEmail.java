@@ -19,7 +19,6 @@ public class SendEmail {
     public String get_receiverEmail(){
         return receiverEmail;
     }
-    //public static void main(String[] args) {
     public void sendalertEmail(){
         final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
         Properties props = System.getProperties();
