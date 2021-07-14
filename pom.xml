@@ -25,21 +25,21 @@
 
   <dependencies>
     <dependency>
-      <groupId>javax.activation</groupId>
+      <groupId>com.sun.activation</groupId>
       <artifactId>activation</artifactId>
       <scope>system</scope>
       <version>1.1.1</version>
       <systemPath>${project.basedir}/libs/activation.jar</systemPath>
     </dependency>
     <dependency>
-      <groupId>javax.mail</groupId>
-      <artifactId>mail</artifactId>
+      <groupId>com.sun.mail</groupId>
+      <artifactId>javax.mail</artifactId>
       <version>1.4.5</version>
       <scope>system</scope>
       <systemPath>${project.basedir}/libs/mail.jar</systemPath>
     </dependency>
     <dependency>
-      <groupId>javax.mail.smtp</groupId>
+      <groupId>com.sun.mail</groupId>
       <artifactId>smtp</artifactId>
       <version>1.4.5</version>
       <scope>system</scope>
