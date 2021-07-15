@@ -20,7 +20,9 @@ public class SendEmail {
         return receiverEmail;
     }
     public void sendalertEmail(){
+        //oringinal
         final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
+        //String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
         Properties props = System.getProperties();
         props.setProperty("mail.smtp.host", "smtp.gmail.com");
         props.setProperty("mail.smtp.socketFactory.class", SSL_FACTORY);
@@ -56,9 +58,9 @@ public class SendEmail {
         }
     }
 
-    public static void main(String args[]){
-        SendEmail send = new SendEmail();
-        send.set_receiverEmail("zta23@sfu.ca");
-        send.sendalertEmail();
-    }
+    //public static void main(String args[]){
+    //    SendEmail send = new SendEmail();
+    //    send.set_receiverEmail("zta23@sfu.ca");
+    //    send.sendalertEmail();
+    //}
 }

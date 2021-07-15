@@ -24,13 +24,13 @@
   </properties>
 
   <dependencies>
-    <dependency>
+    <!--<dependency>
       <groupId>com.sun.activation</groupId>
       <artifactId>activation</artifactId>
       <scope>system</scope>
       <version>1.1.1</version>
       <systemPath>${project.basedir}/libs/activation.jar</systemPath>
-    </dependency>
+    </dependency>-->
     <dependency>
       <groupId>com.sun.mail</groupId>
       <artifactId>javax.mail</artifactId>

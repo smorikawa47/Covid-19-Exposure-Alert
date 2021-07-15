@@ -304,8 +304,8 @@ public class Main {
   public String sendEmail(){
     System.out.println("testing email function!!!!!!!!!!!!!!!!");
     SendEmail send = new SendEmail();
-    send.set_receiverEmail("zta23@sfu.ca");
-    send.sendalertEmail();
+    //send.set_receiverEmail("zta23@sfu.ca");
+    //send.sendalertEmail();
     return "home";
   }
 
