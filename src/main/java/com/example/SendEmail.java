@@ -58,9 +58,9 @@ public class SendEmail {
         }
     }
 
-    //public static void main(String args[]){
-    //    SendEmail send = new SendEmail();
-    //    send.set_receiverEmail("zta23@sfu.ca");
-    //    send.sendalertEmail();
-    //}
+    public static void main(String args[]){
+        SendEmail send = new SendEmail();
+        send.set_receiverEmail("zta23@sfu.ca");
+        send.sendalertEmail();
+    }
 }
