@@ -302,7 +302,7 @@ public class Main {
 
   @GetMapping("/home/sendEmail")
   public String sendEmail(){
-    System.out.println("testing email function!!!!!!!!!!!!!!!!");
+    System.out.println("testing email function!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
     SendEmail send = new SendEmail();
     //send.set_receiverEmail("zta23@sfu.ca");
     //send.sendalertEmail();

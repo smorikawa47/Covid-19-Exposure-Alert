@@ -12,15 +12,16 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.util.*;
 public class SendEmail {
-    public String receiverEmail = "";
+    public String receiverEmail;
     public void set_receiverEmail(String email){
         receiverEmail = email;
     }
     public String get_receiverEmail(){
         return receiverEmail;
     }
+    //code inspired from stackoverflow:
+    //https://stackoverflow.com/questions/3649014/send-email-using-java
     public void sendalertEmail(){
-        //oringinal
         final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
         //String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
         Properties props = System.getProperties();
