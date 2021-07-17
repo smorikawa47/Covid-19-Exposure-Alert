@@ -81,6 +81,18 @@ public class Main {
     return "thankyou";
   }
 
+  @GetMapping("/successfulreport")
+  public String thankDinerForReport2(Map<String, Object> model){
+    return "successfulreport";
+  }
+
+  @GetMapping("/reportlogin")
+  public String reportLogin(Map<String, Object> model){
+    Diner diner = new Diner();
+    model.put("diner", diner);
+    return "reportlogin";
+  }
+
   @GetMapping("/dinerlogin")
   public String dinerLogin(Map<String, Object> model){
     Diner diner = new Diner();
@@ -88,11 +100,77 @@ public class Main {
     return "dinerlogin";
   }
 
+  @PostMapping("/reportloginpage")
+  public String reportLoginPage(Map<String, Object> model){
+    Diner diner = new Diner();
+    model.put("diner", diner);
+    return "reportlogin";
+  }
+
   @PostMapping("/dinerloginpage")
   public String dinerLoginPage(Map<String, Object> model){
     Diner diner = new Diner();
     model.put("diner", diner);
     return "dinerlogin";
+  }
+
+  @PostMapping(
+    path = "/reportlogin",
+    consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE}
+    )
+  public String loginToDinerAccount2(Map<String, Object> model, Diner diner) throws Exception {
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      Diner d = new Diner();
+      d.setUsername(diner.getUsername());
+      d.setName(diner.getName());
+      d.setEmail(diner.getEmail());
+      d.setPassword(diner.getPassword());
+      System.out.println(d);
+      stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Diners (id serial, username varchar(30), name varchar(16), email varchar(30), password varchar(30), exposed boolean, exposure date)");
+      String sql = "SELECT * FROM Diners WHERE username = '" + diner.getUsername() + "'";
+      System.out.println(sql);
+      ResultSet queriedUser = stmt.executeQuery(sql);
+
+      if(!queriedUser.isBeforeFirst()){
+        String message = "Username not found in system.";
+        model.put("message", message);
+        return "reportlogin";
+      }
+      queriedUser.next();
+      
+      String queriedPassword = queriedUser.getString("password");
+      System.out.println(queriedPassword);
+      System.out.println(diner.getPassword());
+      if(!(diner.getPassword().equals(queriedPassword))){
+        String message = "Password does not match.";
+        model.put("message", message);
+        return "reportlogin";
+      }
+
+      ResultSet diner2 = stmt.executeQuery("SELECT * FROM Diners WHERE username = '" + diner.getUsername() + "'");
+      List<List<String>> recs = new ArrayList<>();
+      while(diner2.next()){
+        String id = diner2.getString("id");
+        String username = diner2.getString("username");
+        String name = diner2.getString("name");
+        String email = diner2.getString("email");
+        String password = diner2.getString("password");
+        ArrayList<String> rec = new ArrayList<>();
+        rec.add(id);
+        rec.add(username);
+        rec.add(name);
+        rec.add(email);
+        rec.add(password);
+        recs.add(rec);
+      }
+      model.put("recs", recs);
+      return "successfulreport";
+
+    }catch (Exception e) {
+      model.put("message", e.getMessage());
+      return "error";
+    }
   }
 
   @PostMapping(
