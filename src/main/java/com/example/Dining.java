@@ -7,10 +7,16 @@ public class Dining {
     private LocalDate date;
     private String dinerName;
     private String dinerEmail;
+    private Boolean dinerExposed;
 
     public Dining(){
         this.time = LocalTime.now();
         this.date = LocalDate.now();
+        this.dinerExposed = false;
+    }
+
+    public Boolean getDinerExposed() {
+        return this.dinerExposed;
     }
 
     public String getRestaurant() {
@@ -31,6 +37,10 @@ public class Dining {
 
     public String getDinerEmail() {
         return this.dinerEmail;
+    }
+
+    public void setDinerExposed(Boolean exposed) {
+        this.dinerExposed = exposed;
     }
 
     public void setRestaurant(String restaurant) {

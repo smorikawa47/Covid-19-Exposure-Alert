@@ -126,6 +126,7 @@ public class Main {
       d.setName(diner.getName());
       d.setEmail(diner.getEmail());
       d.setPassword(diner.getPassword());
+      d.setExposed(diner.wasExposed());
       System.out.println(d);
       stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Diners (id serial, username varchar(30), name varchar(16), email varchar(30), password varchar(30), exposed boolean, exposure date)");
       String sql = "SELECT * FROM Diners WHERE username = '" + diner.getUsername() + "'";
@@ -156,12 +157,14 @@ public class Main {
         String name = diner2.getString("name");
         String email = diner2.getString("email");
         String password = diner2.getString("password");
+        String exposed = diner2.getString("exposed");
         ArrayList<String> rec = new ArrayList<>();
         rec.add(id);
         rec.add(username);
         rec.add(name);
         rec.add(email);
         rec.add(password);
+        rec.add(exposed);
         recs.add(rec);
       }
       model.put("recs", recs);
@@ -288,8 +291,8 @@ public class Main {
     Time time = Time.valueOf(dining.getTime());
     try (Connection connection = dataSource.getConnection()) {
       Statement stmt = connection.createStatement();
-      stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Dinings (id serial, restaurant varchar(30), name varchar(30), email varchar(30), time time, date date)");
-      String sql = "INSERT INTO Dinings (restaurant,name,email,time,date) VALUES ('" + dining.getRestaurant() + "', '" + dining.getDinerName() + "', '" + dining.getDinerEmail() + "', '" + time + "', '" + date + "')";
+      stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Dinings (id serial, restaurant varchar(30), name varchar(30), email varchar(30), time time, date date, exposed boolean)");
+      String sql = "INSERT INTO Dinings (restaurant,name,email,time,date,exposed) VALUES ('" + dining.getRestaurant() + "', '" + dining.getDinerName() + "', '" + dining.getDinerEmail() + "', '" + time + "', '" + date + "', '" + dining.getDinerExposed() +"')";
       System.out.println(sql);
       stmt.executeUpdate(sql);
       model.put("dining", dining);
@@ -361,12 +364,14 @@ public class Main {
         String email = diner.getString("email");
         String time = diner.getString("time");
         String date = diner.getString("date");
+        String exposed = diner.getString("exposed");
         ArrayList<String> rec = new ArrayList<>();
         rec.add(id);
         rec.add(name);
         rec.add(email);
         rec.add(time);
         rec.add(date);
+        rec.add(exposed);
         recs.add(rec);
       }
       model.put("recs", recs);
