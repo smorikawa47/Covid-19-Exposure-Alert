@@ -121,6 +121,7 @@ public class Main {
   public String loginToDinerAccount2(Map<String, Object> model, Diner diner) throws Exception {
     try (Connection connection = dataSource.getConnection()) {
       Statement stmt = connection.createStatement();
+      Statement stmt2 = connection.createStatement();
       Diner d = new Diner();
       d.setUsername(diner.getUsername());
       d.setName(diner.getName());
@@ -128,6 +129,7 @@ public class Main {
       d.setPassword(diner.getPassword());
       d.setExposed(diner.wasExposed());
       System.out.println(d);
+      diner.setExposed(true);
       stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Diners (id serial, username varchar(30), name varchar(16), email varchar(30), password varchar(30), exposed boolean, exposure date)");
       String sql = "SELECT * FROM Diners WHERE username = '" + diner.getUsername() + "'";
       System.out.println(sql);
@@ -166,6 +168,11 @@ public class Main {
         rec.add(password);
         rec.add(exposed);
         recs.add(rec);
+
+        String q1 = "UPDATE Dinings SET exposed = '" + diner.wasExposed() + "'";
+        String q2 = q1 + " WHERE email = '" + email + "'";
+        System.out.println(q2);
+        stmt2.executeUpdate(q2);
       }
       model.put("recs", recs);
       return "successfulreport";
@@ -412,12 +419,14 @@ public class Main {
         String email = diner.getString("email");
         String time = diner.getString("time");
         String date = diner.getString("date");
+        String exposed = diner.getString("exposed");
         ArrayList<String> rec = new ArrayList<>();
         rec.add(idNew);
         rec.add(name);
         rec.add(email);
         rec.add(time);
         rec.add(date);
+        rec.add(exposed);
         recs.add(rec);
       }
       model.put("recs", recs);
