@@ -363,6 +363,7 @@ public class Main {
       while(restaurants.next()) {
         restaurantName = restaurants.getString("name");
       }
+      stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Dinings (id serial, restaurant varchar(30), name varchar(30), email varchar(30), time time, date date, exposed boolean)");
       ResultSet diner = stmt.executeQuery("SELECT * FROM Dinings WHERE restaurant = '" +restaurantName+ "'");
       List<List<String>> recs = new ArrayList<>();
       while(diner.next()){
