@@ -152,6 +152,17 @@ public class Main {
         return "reportlogin";
       }
 
+      String queriedEmail = queriedUser.getString("email");
+      String sql2 = "SELECT * FROM Dinings WHERE email = '" + queriedEmail + "'";
+      System.out.println(sql2);
+      ResultSet isDined = stmt.executeQuery(sql2);
+      if(!isDined.isBeforeFirst()){
+        String message = "You haven't dined at a restaurant yet.";
+        model.put("message", message);
+        return "reportlogin";
+      }
+      isDined.next();
+
       ResultSet diner2 = stmt.executeQuery("SELECT * FROM Diners WHERE username = '" + diner.getUsername() + "'");
       List<List<String>> recs = new ArrayList<>();
       while(diner2.next()){
