@@ -131,6 +131,7 @@ public class Main {
       System.out.println(d);
       diner.setExposed(true);
       stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Diners (id serial, username varchar(30), name varchar(16), email varchar(30), password varchar(30), exposed boolean, exposure date)");
+      stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
       String sql = "SELECT * FROM Diners WHERE username = '" + diner.getUsername() + "'";
       System.out.println(sql);
       ResultSet queriedUser = stmt.executeQuery(sql);
