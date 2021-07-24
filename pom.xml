@@ -14,7 +14,6 @@
     <relativePath/>
   </parent>
   <name>java-getting-started</name>
-
   <properties>
     <java.version>1.8</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -23,8 +22,28 @@
     <webjars-jquery-ui.version>1.12.1</webjars-jquery-ui.version>
     <webjars-jquery.version>3.3.1-1</webjars-jquery.version>
   </properties>
-
   <dependencies>
+    <dependency>
+      <groupId>com.sun.activation</groupId>
+      <artifactId>activation</artifactId>
+      <scope>system</scope>
+      <version>1.1.1</version>
+      <systemPath>${project.basedir}/libs/activation.jar</systemPath>
+    </dependency>
+    <dependency>
+      <groupId>com.sun.mail</groupId>
+      <artifactId>javax.mail</artifactId>
+      <version>1.4.5</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/libs/mail.jar</systemPath>
+    </dependency>
+    <!--<dependency>
+      <groupId>com.sun.mail</groupId>
+      <artifactId>smtp</artifactId>
+      <version>1.4.5</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/libs/smtp.jar</systemPath>
+    </dependency>-->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
@@ -103,6 +122,17 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+            </manifest>
+          </archive>
+        </configuration>
       </plugin>
     </plugins>
   </build>

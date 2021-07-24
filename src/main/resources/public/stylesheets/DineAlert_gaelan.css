@@ -39,6 +39,11 @@ h1 {
     padding: 5px;
 }
 
+.covidButton {
+    font-family: Cambria;
+    font-size: 14px;
+    padding: 5px;
+}
 th {
     background-color: rgb(216, 216, 216);
     height:10px;

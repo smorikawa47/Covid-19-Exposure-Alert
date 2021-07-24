@@ -41,6 +41,16 @@ import java.time.*;
 import java.sql.Time;
 import java.sql.Date;
 
+import javax.mail.Authenticator;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+
 @Controller
 @SpringBootApplication
 public class Main {
@@ -71,6 +81,18 @@ public class Main {
     return "thankyou";
   }
 
+  @GetMapping("/successfulreport")
+  public String thankDinerForReport2(Map<String, Object> model){
+    return "successfulreport";
+  }
+
+  @GetMapping("/reportlogin")
+  public String reportLogin(Map<String, Object> model){
+    Diner diner = new Diner();
+    model.put("diner", diner);
+    return "reportlogin";
+  }
+
   @GetMapping("/dinerlogin")
   public String dinerLogin(Map<String, Object> model){
     Diner diner = new Diner();
@@ -78,11 +100,99 @@ public class Main {
     return "dinerlogin";
   }
 
+  @PostMapping("/reportloginpage")
+  public String reportLoginPage(Map<String, Object> model){
+    Diner diner = new Diner();
+    model.put("diner", diner);
+    return "reportlogin";
+  }
+
   @PostMapping("/dinerloginpage")
   public String dinerLoginPage(Map<String, Object> model){
     Diner diner = new Diner();
     model.put("diner", diner);
     return "dinerlogin";
+  }
+
+  @PostMapping(
+    path = "/reportlogin",
+    consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE}
+    )
+  public String loginToDinerAccount2(Map<String, Object> model, Diner diner) throws Exception {
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      Statement stmt2 = connection.createStatement();
+      Diner d = new Diner();
+      d.setUsername(diner.getUsername());
+      d.setName(diner.getName());
+      d.setEmail(diner.getEmail());
+      d.setPassword(diner.getPassword());
+      d.setExposed(diner.wasExposed());
+      System.out.println(d);
+      diner.setExposed(true);
+      stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Diners (id serial, username varchar(30), name varchar(16), email varchar(30), password varchar(30), exposed boolean, exposure date)");
+      stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
+      String sql = "SELECT * FROM Diners WHERE username = '" + diner.getUsername() + "'";
+      System.out.println(sql);
+      ResultSet queriedUser = stmt.executeQuery(sql);
+
+      if(!queriedUser.isBeforeFirst()){
+        String message = "Username not found in system.";
+        model.put("message", message);
+        return "reportlogin";
+      }
+      queriedUser.next();
+      
+      String queriedPassword = queriedUser.getString("password");
+      System.out.println(queriedPassword);
+      System.out.println(diner.getPassword());
+      if(!(diner.getPassword().equals(queriedPassword))){
+        String message = "Password does not match.";
+        model.put("message", message);
+        return "reportlogin";
+      }
+
+      String queriedEmail = queriedUser.getString("email");
+      String sql2 = "SELECT * FROM Dinings WHERE email = '" + queriedEmail + "'";
+      System.out.println(sql2);
+      ResultSet isDined = stmt.executeQuery(sql2);
+      if(!isDined.isBeforeFirst()){
+        String message = "You haven't dined at a restaurant yet.";
+        model.put("message", message);
+        return "reportlogin";
+      }
+      isDined.next();
+
+      ResultSet diner2 = stmt.executeQuery("SELECT * FROM Diners WHERE username = '" + diner.getUsername() + "'");
+      List<List<String>> recs = new ArrayList<>();
+      while(diner2.next()){
+        String id = diner2.getString("id");
+        String username = diner2.getString("username");
+        String name = diner2.getString("name");
+        String email = diner2.getString("email");
+        String password = diner2.getString("password");
+        String exposed = diner2.getString("exposed");
+        ArrayList<String> rec = new ArrayList<>();
+        rec.add(id);
+        rec.add(username);
+        rec.add(name);
+        rec.add(email);
+        rec.add(password);
+        rec.add(exposed);
+        recs.add(rec);
+
+        String q1 = "UPDATE Dinings SET exposed = '" + diner.wasExposed() + "'";
+        String q2 = q1 + " WHERE email = '" + email + "'";
+        System.out.println(q2);
+        stmt2.executeUpdate(q2);
+      }
+      model.put("recs", recs);
+      return "successfulreport";
+
+    }catch (Exception e) {
+      model.put("message", e.getMessage());
+      return "error";
+    }
   }
 
   @PostMapping(
@@ -187,13 +297,11 @@ public class Main {
     return "diningreport";
   }
 
-  // // 
-  /*Do we need this ? Done by Tauseef Added this 05.07 */
   @PostMapping("/diningreportpage")
   public String diningReportPage(Map <String, Object> model){
     Dining dining = new Dining();
     model.put("dining", dining);
-    return "diningreport"; //diningreport.html
+    return "diningreport";
   }
 
   @PostMapping("/diningreport")
@@ -202,8 +310,9 @@ public class Main {
     Time time = Time.valueOf(dining.getTime());
     try (Connection connection = dataSource.getConnection()) {
       Statement stmt = connection.createStatement();
-      stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Dinings (id serial, restaurant varchar(30), name varchar(30), email varchar(30), time time, date date)");
-      String sql = "INSERT INTO Dinings (restaurant,name,email,time,date) VALUES ('" + dining.getRestaurant() + "', '" + dining.getDinerName() + "', '" + dining.getDinerEmail() + "', '" + time + "', '" + date + "')";
+      stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Dinings (id serial, restaurant varchar(30), name varchar(30), email varchar(30), time time, date date, exposed boolean)");
+      stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
+      String sql = "INSERT INTO Dinings (restaurant,name,email,time,date,exposed) VALUES ('" + dining.getRestaurant() + "', '" + dining.getDinerName() + "', '" + dining.getDinerEmail() + "', '" + time + "', '" + date + "', '" + dining.getDinerExposed() +"')";
       System.out.println(sql);
       stmt.executeUpdate(sql);
       model.put("dining", dining);
@@ -214,7 +323,7 @@ public class Main {
     }
   }
 
-    // Is this even in use?? -Markus
+
     @PostMapping("/adminloginpage")
     public String adminLoginPage(Map<String, Object> model){
       Restaurant restaurant = new Restaurant();
@@ -262,13 +371,13 @@ public class Main {
         model.put("message", message);
         return "adminlogin";
       }
-      //Andy: query diner information
-      //System.out.println("SELECT * FROM Dinings WHERE restaurant = '"+ restaurant.getName() +"'");
       ResultSet restaurants = stmt.executeQuery("SELECT * FROM Restaurants WHERE username = '"+restaurant.getUsername()+"'");
       String restaurantName = "";
       while(restaurants.next()) {
         restaurantName = restaurants.getString("name");
       }
+      stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Dinings (id serial, restaurant varchar(30), name varchar(30), email varchar(30), time time, date date, exposed boolean)");
+      stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
       ResultSet diner = stmt.executeQuery("SELECT * FROM Dinings WHERE restaurant = '" +restaurantName+ "'");
       List<List<String>> recs = new ArrayList<>();
       while(diner.next()){
@@ -277,23 +386,32 @@ public class Main {
         String email = diner.getString("email");
         String time = diner.getString("time");
         String date = diner.getString("date");
+        String exposed = diner.getString("exposed");
         ArrayList<String> rec = new ArrayList<>();
         rec.add(id);
         rec.add(name);
         rec.add(email);
         rec.add(time);
         rec.add(date);
+        rec.add(exposed);
         recs.add(rec);
       }
       model.put("recs", recs);
 
-      //model.put("restaurant", restaurant);
-      //return "redirect:/home";
       return "home";
     }  catch (Exception e) {
       model.put("message", e.getMessage());
       return "error";
     }
+  }
+
+  @GetMapping("/home/sendEmail")
+  public String sendEmail(){
+    System.out.println("testing email function!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    SendEmail send = new SendEmail();
+    //send.set_receiverEmail("zta23@sfu.ca");
+    //send.sendalertEmail();
+    return "home";
   }
 
   @GetMapping("/home/deleted/{id}")
@@ -316,12 +434,14 @@ public class Main {
         String email = diner.getString("email");
         String time = diner.getString("time");
         String date = diner.getString("date");
+        String exposed = diner.getString("exposed");
         ArrayList<String> rec = new ArrayList<>();
         rec.add(idNew);
         rec.add(name);
         rec.add(email);
         rec.add(time);
         rec.add(date);
+        rec.add(exposed);
         recs.add(rec);
       }
       model.put("recs", recs);
@@ -366,10 +486,8 @@ public class Main {
       sql = "INSERT INTO Restaurants (name,username,password,premium) VALUES ('" + restaurant.getName() + "', '" + restaurant.getUsername() + "', '" + restaurant.getPassword() + "', " + restaurant.getPremiumStatus() + ")";
       System.out.println(sql);
       stmt.executeUpdate(sql);
-      //model.put("restaurant", restaurant);
-
-      //Andy: query diner information associated with restaurant name
-      //System.out.println("SELECT * FROM Dinings WHERE restaurant = '"+ restaurant.getName() +"'");
+      stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Dinings (id serial, restaurant varchar(30), name varchar(30), email varchar(30), time time, date date, exposed boolean)");
+      stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
       ResultSet diner = stmt.executeQuery("SELECT * FROM Dinings WHERE restaurant = '"+ restaurant.getName() +"'");
         List<List<String>> recs = new ArrayList<>();
         while(diner.next()){
