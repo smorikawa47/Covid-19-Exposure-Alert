@@ -36,7 +36,7 @@ public class CovidReportTest {
             LocalDate date = LocalDate.now();
             try (Connection connection = dataSource.getConnection()) {
                 Statement stmt = connection.createStatement();
-                String sql = "INSERT INTO Dinings (restaurant,name,email,time,date,exposed) VALUES ('testRestaurant', 'GaelanTest', 'GaelanTest@sfu.ca', '', '" + date + "', 'true')";
+                String sql = "INSERT INTO Dinings (restaurant,name,email,time,date,exposed) VALUES ('testRestaurant', 'GaelanTest', 'GaelanTest@sfu.ca', '', '" + date + "', 'false')";
                 stmt.executeUpdate(sql);
             } catch (Exception e) {
              
@@ -51,11 +51,11 @@ public class CovidReportTest {
     }    
 
     @Test
-    public static void checkForDiner(){
+    public static void checkForReport(){
         assertEquals(true, true);
         try (Connection connection = dataSource.getConnection()) {
             Statement stmt = connection.createStatement();
-            String sql = "SELECT * FROM Diners WHERE email = '" + diner.getEmail() + "'";
+            String sql = "SELECT * FROM Dinings WHERE email = '" + diner.getEmail() + "' AND exposed = TRUE";
             ResultSet dinersWithMatchingEmail = stmt.executeQuery(sql);
             assertEquals(true, dinersWithMatchingEmail.isBeforeFirst());
             dinersWithMatchingEmail.next();
@@ -68,7 +68,7 @@ public class CovidReportTest {
     public static void tearDown(){
         try (Connection connection = dataSource.getConnection()) {
             Statement stmt = connection.createStatement();
-            String sql = "DELETE FROM Diners WHERE email = '" + diner.getEmail() + "'";
+            String sql = "DELETE FROM Dinings WHERE email = '" + diner.getEmail() + "'";
             stmt.executeUpdate(sql);
         } catch (Exception e) {
          

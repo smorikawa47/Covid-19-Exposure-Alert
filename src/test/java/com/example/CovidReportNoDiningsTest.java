@@ -39,11 +39,10 @@ public class CovidReportNoDiningsTest {
     }    
 
     @Test
-    public static void checkForDiner(){
-        assertEquals(true, true);
+    public static void checkForReport(){
         try (Connection connection = dataSource.getConnection()) {
             Statement stmt = connection.createStatement();
-            String sql = "SELECT * FROM Diners WHERE email = '" + diner.getEmail() + "'";
+            String sql = "SELECT * FROM Dinings WHERE email = '" + diner.getEmail() + "' AND exposed = TRUE";
             ResultSet dinersWithMatchingEmail = stmt.executeQuery(sql);
             assertEquals(false, dinersWithMatchingEmail.isBeforeFirst());
             dinersWithMatchingEmail.next();
@@ -56,7 +55,7 @@ public class CovidReportNoDiningsTest {
     public static void tearDown(){
         try (Connection connection = dataSource.getConnection()) {
             Statement stmt = connection.createStatement();
-            String sql = "DELETE FROM Diners WHERE email = '" + diner.getEmail() + "'";
+            String sql = "DELETE FROM Dinings WHERE email = '" + diner.getEmail() + "'";
             stmt.executeUpdate(sql);
         } catch (Exception e) {
          
