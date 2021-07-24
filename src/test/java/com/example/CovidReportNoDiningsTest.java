@@ -9,8 +9,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.Map;
 
 import javax.sql.DataSource;
@@ -18,9 +16,8 @@ import javax.sql.DataSource;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-public class CovidReportTest {
+public class CovidReportNoDiningsTest {
     static Diner diner;
-    static Dining dining;
     static Main main;
     static Map<String, Object> model;
     static DataSource dataSource = main.getDataSource();
@@ -33,15 +30,6 @@ public class CovidReportTest {
             diner.setEmail("GaelanTest@sfu.ca");
             diner.setPassword("testpassword");
             diner.setUsername("GaelanTest");
-            LocalDate date = LocalDate.now();
-            try (Connection connection = dataSource.getConnection()) {
-                Statement stmt = connection.createStatement();
-                String sql = "INSERT INTO Dinings (restaurant,name,email,time,date,exposed) VALUES ('testRestaurant', 'GaelanTest', 'GaelanTest@sfu.ca', '', '" + date + "', 'true')";
-                stmt.executeUpdate(sql);
-            } catch (Exception e) {
-             
-            }
-            
             System.out.println("About to report COVID-19...");
             main.loginToDinerAccount2(model, diner);
         }
@@ -57,7 +45,7 @@ public class CovidReportTest {
             Statement stmt = connection.createStatement();
             String sql = "SELECT * FROM Diners WHERE email = '" + diner.getEmail() + "'";
             ResultSet dinersWithMatchingEmail = stmt.executeQuery(sql);
-            assertEquals(true, dinersWithMatchingEmail.isBeforeFirst());
+            assertEquals(false, dinersWithMatchingEmail.isBeforeFirst());
             dinersWithMatchingEmail.next();
         } catch (Exception e) {
          
