@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" th:href="@{/stylesheets/DineAlert_gaelan.css}">
+    <title>DineAlert</title>
+</head>
+<body>
+  <div class="backdropDiv">
+        <div class = "mainDiv">
+          <h1 class="welcomeHeader">Thank you! Covid Case reported!</h1>
+          <h2>Diner Information</h2>
+            <table>
+                <tr>
+                    <th> UserName</th>
+                    <th> name</th>
+                    <th> email</th>
+                    <th> password</th>
+                </tr>
+                <tr th:each="rec : ${recs}">
+                    <!-- <td><th:block th:text="${rec[0]}"/> </td> -->
+                    <!--[1] is name-->
+                    <td><th:block th:text="${rec[1]}"/> </td>
+                    <!--[2] is email-->
+                    <td><th:block th:text="${rec[2]}"/> </td>
+                    <td><th:block th:text="${rec[3]}"/> </td>
+                    <td><th:block th:text="${rec[4]}"/> </td>
+                    <td>
+                        <!--<a th:href="@{'/home/sendEmail/' + ${rec[2]}}" th:text="SENDEMAIL"></a>-->
+                    </td>
+                </tr>
+            </table>
+          <form id = "backToUserSelect" th:action = "@{/}" method="post">
+            <td><input type ="submit" value="Return to home" class = "backButton"/></td>
+        </form>
+        </div>
+  </div>
+</body>
+</html>
