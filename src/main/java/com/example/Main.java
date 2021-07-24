@@ -61,6 +61,9 @@ public class Main {
   @Autowired
   private DataSource dataSource;
 
+  public DataSource getDataSource(){
+    return this.dataSource;
+  }
   public static void main(String[] args) throws Exception {
     SpringApplication.run(Main.class, args);
   }
