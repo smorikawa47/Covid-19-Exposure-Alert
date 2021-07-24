@@ -16,7 +16,7 @@ import javax.sql.DataSource;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-public class CovidTest {
+public class CovidReportTest {
     static Diner diner;
     static Main main;
     static Map<String, Object> model;
