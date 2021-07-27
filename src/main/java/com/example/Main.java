@@ -50,6 +50,8 @@ import javax.mail.Transport;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 
 @Controller
 @SpringBootApplication
@@ -196,6 +198,15 @@ public class Main {
       model.put("message", e.getMessage());
       return "error";
     }
+  }
+
+  @GetMapping("/set")
+  public String setCookie(HttpServletResponse response){
+    //set a new cookie
+    Cookie cookie = new Cookie("heyAndy", "andy");
+    response.addCookie(cookie);
+
+    return "Spring Boot Cookies";
   }
 
   @PostMapping(
