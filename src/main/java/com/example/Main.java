@@ -25,6 +25,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.util.WebUtils;
 
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.MediaType;
@@ -35,22 +36,26 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.time.*;
+// import java.time.*;
 import java.sql.Time;
+import java.time.LocalDate;
 import java.sql.Date;
 
-import javax.mail.Authenticator;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
+import javax.naming.spi.DirStateFactory.Result;
+// import javax.mail.Authenticator;
+// import javax.mail.Message;
+// import javax.mail.MessagingException;
+// import javax.mail.PasswordAuthentication;
+// import javax.mail.Session;
+// import javax.mail.Transport;
+// import javax.mail.internet.AddressException;
+// import javax.mail.internet.InternetAddress;
+// import javax.mail.internet.MimeMessage;
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 @Controller
@@ -66,12 +71,22 @@ public class Main {
   public DataSource getDataSource(){
     return this.dataSource;
   }
+
+  private static Map<String, User> loggedInUsers = new HashMap<String, User>();
+
+  private static User loggedInUser = new User();
+
   public static void main(String[] args) throws Exception {
     SpringApplication.run(Main.class, args);
   }
 
   @RequestMapping("/")
   String index(Map<String, Object> model) {
+    return "index";
+  }
+
+  @RequestMapping("index")
+  String index1(Map<String, Object> model) {
     return "index";
   }
 
@@ -200,20 +215,134 @@ public class Main {
     }
   }
 
-  @GetMapping("/set")
-  public String setCookie(HttpServletResponse response){
-    //set a new cookie
-    Cookie cookie = new Cookie("heyAndy", "andy");
-    response.addCookie(cookie);
+  public String getActionFromDinerLoginStatus(HttpServletRequest request, String pageWithAccess, String pageWithoutAccess){
+    String cookie = getCookieString(request, "username");
+    System.out.println(cookie);
+    if(loggedInUsers.containsKey(cookie) && loggedInUser.isDiner()){
+      loggedInUser = loggedInUsers.get(cookie);
+      System.out.println("The logged in user is: " + loggedInUser.getUsername());
+      return pageWithAccess;
+    } else {
+      return "redirect:/" + pageWithoutAccess;
+    }
+  }
 
-    return "Spring Boot Cookies";
+  public String getActionFromRestaurantLoginStatus(HttpServletRequest request, String pageWithAccess, String pageWithoutAccess){
+    String cookie = getCookieString(request, "username");
+    System.out.println(cookie);
+    if(loggedInUsers.containsKey(cookie) && loggedInUser.isRestaurant()){
+      loggedInUser = loggedInUsers.get(cookie);
+      System.out.println("The logged in user is: " + loggedInUser.getUsername());
+      return pageWithAccess;
+    } else {
+      return "redirect:/" + pageWithoutAccess;
+    }
+  }
+
+  public void setCookie(HttpServletResponse response, String cookieName, String cookieValue){
+    Cookie cookie = new Cookie(cookieName, cookieValue);
+    response.addCookie(cookie);
+  }
+
+  public String getUsernameCookie(@CookieValue(value = "username", defaultValue = "No username cookie!") String cookieVal){
+      return cookieVal;
+  }
+
+  public String getCookieString(HttpServletRequest request, String cookieName){
+      Cookie cookie = WebUtils.getCookie(request, cookieName);
+      return cookie.getValue();
+  }
+
+  public void deleteCookie(HttpServletResponse response, String cookieName){
+    Cookie cookie = new Cookie(cookieName, null);
+    cookie.setMaxAge(0);
+    response.addCookie(cookie);
+  }
+
+  public void refreshLoggedInUserFromCookies(HttpServletRequest request) throws SQLException{
+    String username = getCookieString(request, "username");
+    User userFoundInCookies = new User();
+    if(userExistsInDatabase(username)){
+      if(dinerExistsInDatabase(username)){
+        userFoundInCookies = buildKnownDinerFromDatabase(username);
+        loggedInUser = userFoundInCookies;
+        loggedInUsers.put(username, userFoundInCookies);
+      }
+    }
+    
+  }
+
+  public boolean userExistsInDatabase(String username) throws SQLException {
+    ResultSet queriedUser = getUserByUsername(username);
+    if(!queriedUser.isBeforeFirst()){
+      return false;
+    }
+    queriedUser.next();
+    return true;
+  }
+
+  public ResultSet getUserByUsername(String username) {
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      String sql = "SELECT * FROM Users WHERE username = '" + username + "'";
+      return stmt.executeQuery(sql)
+    }  catch (Exception e) {
+
+    }
+  }
+
+  public User buildKnownUserFromDatabase(String username) throws SQLException {
+    ResultSet user = getDinerByUsername(username);
+    User foundUser = new User();
+    foundUser.setUsername(user.getString("username"));
+    foundUser.setName(user.getString("name"));
+    foundUser.setEmail(user.getString("time"));
+    foundUser.setPassword(user.getString("password"));
+    return foundUser;
+}
+
+  public boolean dinerExistsInDatabase(String dinerUsername) throws SQLException {
+    ResultSet queriedUser = getDinerByUsername(dinerUsername);
+    if(!queriedUser.isBeforeFirst()){
+      return false;
+    }
+    queriedUser.next();
+    return true;
+  }
+
+  public ResultSet getDinerByUsername(String dinerUsername) {
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      String sql = "SELECT * FROM Diners WHERE username = '" + dinerUsername + "'";
+      return stmt.executeQuery(sql)
+    }  catch (Exception e) {
+
+    }
+  }
+
+  public Diner buildKnownDinerFromDatabase(String dinerUsername) throws SQLException {
+      ResultSet diner = getDinerByUsername(dinerUsername);
+      Diner foundDiner = new Diner();
+      foundDiner.setUsername(diner.getString("username"));
+      foundDiner.setName(diner.getString("name"));
+      foundDiner.setEmail(diner.getString("time"));
+      foundDiner.setPassword(diner.getString("password"));
+      foundDiner.setExposed(Boolean.parseBoolean(diner.getString("exposed")));
+      foundDiner.setExposureDate((diner.getDate("exposure").toLocalDate()));
+      return foundDiner;
+  }
+
+  @GetMapping("/logout")
+  public String deleteUsernameCookie(HttpServletResponse response){
+    deleteCookie(response, "username");
+    return "redirect:/index";
   }
 
   @PostMapping(
     path = "/dinerlogin",
     consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE}
     )
-  public String loginToDinerAccount(Map<String, Object> model, Diner diner) throws Exception {
+  public String loginToDinerAccount(HttpServletResponse response, Map<String, Object> model, Diner diner) throws Exception {
     try (Connection connection = dataSource.getConnection()) {
       Statement stmt = connection.createStatement();
       Diner d = new Diner();
@@ -235,15 +364,25 @@ public class Main {
       queriedUser.next();
       
       String queriedPassword = queriedUser.getString("password");
-      System.out.println(queriedPassword);
-      System.out.println(diner.getPassword());
+      //System.out.println(queriedPassword);
+      //System.out.println(diner.getPassword());
       if(!(diner.getPassword().equals(queriedPassword))){
         String message = "Password does not match.";
         model.put("message", message);
         return "dinerlogin";
       }
       
+      System.out.println("Setting user cookie...");
+      setCookie(response, "username", diner.getUsername());
+      System.out.println("Cookie set.");
+      System.out.println("Current logged in users: " + loggedInUsers.toString());
+      System.out.println("Updating logged in users...");
+      loggedInUsers.put(d.getUsername(), diner);
+      loggedInUser = diner;
+      System.out.println("Current logged in users: " + loggedInUsers.toString());
+      System.out.println("Adding the diner " + d + " to the model...");
       model.put("diner", d);
+      System.out.println("Redirecting...");
       return "redirect:/diningreport";
 
     }  catch (Exception e) {
@@ -295,8 +434,8 @@ public class Main {
       sql = "INSERT INTO Diners (username,name,email,password,exposed) VALUES ('" + diner.getUsername() + "', '" + diner.getName() + "', '" + diner.getEmail() + "', '" + diner.getPassword() + "', " + diner.wasExposed() + ")";
       System.out.println(sql);
       stmt.executeUpdate(sql);
-      model.put("diner", diner);
-      return "redirect:/diningreport";
+      //model.put("diner", diner);
+      return "redirect:/dinerlogin";
     }  catch (Exception e) {
       model.put("message", e.getMessage());
       return "error";
@@ -305,17 +444,19 @@ public class Main {
 
 
   @GetMapping("/diningreport")
-  public String diningReport(Map<String, Object> model){
+  public String diningReport(HttpServletRequest request, Map<String, Object> model){
+    System.out.println("Getting dining report page...");
     Dining dining = new Dining();
     model.put("dining", dining);
-    return "diningreport";
+    return getActionFromDinerLoginStatus(request, "diningreport", "dinerlogin");
   }
 
   @PostMapping("/diningreportpage")
-  public String diningReportPage(Map <String, Object> model){
+  public String diningReportPage(HttpServletRequest request, Map <String, Object> model){
+    System.out.println("Getting dining report page...");
     Dining dining = new Dining();
     model.put("dining", dining);
-    return "diningreport";
+    return getActionFromDinerLoginStatus(request, "diningreport", "dinerlogin");
   }
 
   @PostMapping("/diningreport")
@@ -422,7 +563,7 @@ public class Main {
   @GetMapping("/home/sendEmail")
   public String sendEmail(){
     System.out.println("testing email function!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-    SendEmail send = new SendEmail();
+    //SendEmail send = new SendEmail();
     //send.set_receiverEmail("zta23@sfu.ca");
     //send.sendalertEmail();
     return "home";
