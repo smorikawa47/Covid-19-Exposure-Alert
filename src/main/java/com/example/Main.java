@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+//import org.springframework.boot.context.logging.LoggingApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,12 +40,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 // import java.time.*;
 import java.sql.Time;
-import java.time.LocalDate;
+//import java.time.LocalDate;
 import java.sql.Date;
 
-import javax.naming.spi.DirStateFactory.Result;
 // import javax.mail.Authenticator;
 // import javax.mail.Message;
 // import javax.mail.MessagingException;
@@ -81,12 +82,14 @@ public class Main {
   }
 
   @RequestMapping("/")
-  String index(Map<String, Object> model) {
+  String index(HttpServletRequest request, Map<String, Object> model) throws SQLException {
+    refreshLoggedInUserFromCookies(request);
     return "index";
   }
 
   @RequestMapping("index")
-  String index1(Map<String, Object> model) {
+  String index1(HttpServletRequest request, Map<String, Object> model) throws SQLException {
+    refreshLoggedInUserFromCookies(request);
     return "index";
   }
 
@@ -94,6 +97,23 @@ public class Main {
   public String getAdminHomePage(Map<String, Object> model, Restaurant restaurant){
     model.put("restaurant", restaurant);
     return "home";
+  }
+
+  @PostMapping("/logout")
+  public String logout(HttpServletRequest request, HttpServletResponse response, Map<String, Object> model){
+    System.out.println("Logging out...");
+    System.out.println("Deleting cookie...");
+    if(savedUsernameExistsInCookies(request, "username")){
+      deleteUsernameCookie(response);
+    }
+    System.out.println("Clearing logginInUsers...");
+    loggedInUsers.clear();
+    System.out.println("loggedInUsers = " + loggedInUsers.toString());
+    User user = new User ();
+    System.out.println("Clearing loggedInUser...");
+    loggedInUser = user;
+    System.out.println("loggedInUser = " + loggedInUser);
+    return "redirect:/index";
   }
 
   @GetMapping("/thankyou")
@@ -213,130 +233,7 @@ public class Main {
       model.put("message", e.getMessage());
       return "error";
     }
-  }
-
-  public String getActionFromDinerLoginStatus(HttpServletRequest request, String pageWithAccess, String pageWithoutAccess){
-    String cookie = getCookieString(request, "username");
-    System.out.println(cookie);
-    if(loggedInUsers.containsKey(cookie) && loggedInUser.isDiner()){
-      loggedInUser = loggedInUsers.get(cookie);
-      System.out.println("The logged in user is: " + loggedInUser.getUsername());
-      return pageWithAccess;
-    } else {
-      return "redirect:/" + pageWithoutAccess;
-    }
-  }
-
-  public String getActionFromRestaurantLoginStatus(HttpServletRequest request, String pageWithAccess, String pageWithoutAccess){
-    String cookie = getCookieString(request, "username");
-    System.out.println(cookie);
-    if(loggedInUsers.containsKey(cookie) && loggedInUser.isRestaurant()){
-      loggedInUser = loggedInUsers.get(cookie);
-      System.out.println("The logged in user is: " + loggedInUser.getUsername());
-      return pageWithAccess;
-    } else {
-      return "redirect:/" + pageWithoutAccess;
-    }
-  }
-
-  public void setCookie(HttpServletResponse response, String cookieName, String cookieValue){
-    Cookie cookie = new Cookie(cookieName, cookieValue);
-    response.addCookie(cookie);
-  }
-
-  public String getUsernameCookie(@CookieValue(value = "username", defaultValue = "No username cookie!") String cookieVal){
-      return cookieVal;
-  }
-
-  public String getCookieString(HttpServletRequest request, String cookieName){
-      Cookie cookie = WebUtils.getCookie(request, cookieName);
-      return cookie.getValue();
-  }
-
-  public void deleteCookie(HttpServletResponse response, String cookieName){
-    Cookie cookie = new Cookie(cookieName, null);
-    cookie.setMaxAge(0);
-    response.addCookie(cookie);
-  }
-
-  public void refreshLoggedInUserFromCookies(HttpServletRequest request) throws SQLException{
-    String username = getCookieString(request, "username");
-    User userFoundInCookies = new User();
-    if(userExistsInDatabase(username)){
-      if(dinerExistsInDatabase(username)){
-        userFoundInCookies = buildKnownDinerFromDatabase(username);
-        loggedInUser = userFoundInCookies;
-        loggedInUsers.put(username, userFoundInCookies);
-      }
-    }
-    
-  }
-
-  public boolean userExistsInDatabase(String username) throws SQLException {
-    ResultSet queriedUser = getUserByUsername(username);
-    if(!queriedUser.isBeforeFirst()){
-      return false;
-    }
-    queriedUser.next();
-    return true;
-  }
-
-  public ResultSet getUserByUsername(String username) {
-    try (Connection connection = dataSource.getConnection()) {
-      Statement stmt = connection.createStatement();
-      String sql = "SELECT * FROM Users WHERE username = '" + username + "'";
-      return stmt.executeQuery(sql)
-    }  catch (Exception e) {
-
-    }
-  }
-
-  public User buildKnownUserFromDatabase(String username) throws SQLException {
-    ResultSet user = getDinerByUsername(username);
-    User foundUser = new User();
-    foundUser.setUsername(user.getString("username"));
-    foundUser.setName(user.getString("name"));
-    foundUser.setEmail(user.getString("time"));
-    foundUser.setPassword(user.getString("password"));
-    return foundUser;
-}
-
-  public boolean dinerExistsInDatabase(String dinerUsername) throws SQLException {
-    ResultSet queriedUser = getDinerByUsername(dinerUsername);
-    if(!queriedUser.isBeforeFirst()){
-      return false;
-    }
-    queriedUser.next();
-    return true;
-  }
-
-  public ResultSet getDinerByUsername(String dinerUsername) {
-    try (Connection connection = dataSource.getConnection()) {
-      Statement stmt = connection.createStatement();
-      String sql = "SELECT * FROM Diners WHERE username = '" + dinerUsername + "'";
-      return stmt.executeQuery(sql)
-    }  catch (Exception e) {
-
-    }
-  }
-
-  public Diner buildKnownDinerFromDatabase(String dinerUsername) throws SQLException {
-      ResultSet diner = getDinerByUsername(dinerUsername);
-      Diner foundDiner = new Diner();
-      foundDiner.setUsername(diner.getString("username"));
-      foundDiner.setName(diner.getString("name"));
-      foundDiner.setEmail(diner.getString("time"));
-      foundDiner.setPassword(diner.getString("password"));
-      foundDiner.setExposed(Boolean.parseBoolean(diner.getString("exposed")));
-      foundDiner.setExposureDate((diner.getDate("exposure").toLocalDate()));
-      return foundDiner;
-  }
-
-  @GetMapping("/logout")
-  public String deleteUsernameCookie(HttpServletResponse response){
-    deleteCookie(response, "username");
-    return "redirect:/index";
-  }
+  }  
 
   @PostMapping(
     path = "/dinerlogin",
@@ -677,5 +574,216 @@ public class Main {
       return new HikariDataSource(config);
     }
   }
+
+
+
+  public String getActionFromDinerLoginStatus(HttpServletRequest request, String pageWithAccess, String pageWithoutAccess){
+    if(savedUsernameExistsInCookies(request, "username")){
+      String cookie = getCookieString(request, "username");
+      System.out.println(cookie);
+      if(loggedInUsers.containsKey(cookie) && loggedInUser.isDiner()){
+        loggedInUser = loggedInUsers.get(cookie);
+        System.out.println("The logged in user is: " + loggedInUser.getUsername());
+        return pageWithAccess;
+      } else {
+        return "redirect:/" + pageWithoutAccess;
+      }
+    } else {
+      return "redirect:/" + pageWithoutAccess;
+    }
+  }
+    
+
+  public String getActionFromRestaurantLoginStatus(HttpServletRequest request, String pageWithAccess, String pageWithoutAccess){
+    if(savedUsernameExistsInCookies(request, "username")){
+      String cookie = getCookieString(request, "username");
+      System.out.println(cookie);
+      if(loggedInUsers.containsKey(cookie) && loggedInUser.isRestaurant()){
+        loggedInUser = loggedInUsers.get(cookie);
+        System.out.println("The logged in user is: " + loggedInUser.getUsername());
+        return pageWithAccess;
+      } else {
+        return "redirect:/" + pageWithoutAccess;
+      }
+    } else {
+      return "redirect:/" + pageWithoutAccess;
+    }
+  }
+
+  public void deleteUsernameCookie(HttpServletResponse response){
+    deleteCookie(response, "username");
+  }
+
+  public void setCookie(HttpServletResponse response, String cookieName, String cookieValue){
+    Cookie cookie = new Cookie(cookieName, cookieValue);
+    response.addCookie(cookie);
+  }
+
+  public String getUsernameCookie(@CookieValue(value = "username", defaultValue = "No username cookie!") String cookieVal){
+    return cookieVal;
+  }
+
+  public String getCookieString(HttpServletRequest request, String cookieName){
+    Cookie cookie = WebUtils.getCookie(request, cookieName);
+    return cookie.getValue();
+  }
+
+  public boolean savedUsernameExistsInCookies(HttpServletRequest request, String cookieName){
+    Cookie cookie = WebUtils.getCookie(request, cookieName);
+    if (Objects.nonNull(cookie)){
+      return true;
+    } 
+    else return false;
+  }
+
+  public void deleteCookie(HttpServletResponse response, String cookieName){
+    Cookie cookie = new Cookie(cookieName, null);
+    cookie.setMaxAge(0);
+    response.addCookie(cookie);
+  }
+
+  public void refreshLoggedInUserFromCookies(HttpServletRequest request) throws SQLException{
+    if(savedUsernameExistsInCookies(request, "username")){
+      String username = getCookieString(request, "username");
+      User userFoundInCookies = new User();
+      if(userExistsInDatabase(username)){
+        if(dinerExistsInDatabase(username)){
+          userFoundInCookies = buildKnownDinerFromDatabase(username);
+          loggedInUser = userFoundInCookies;
+          loggedInUsers.put(username, userFoundInCookies);
+        }
+        if(restaurantExistsInDatabase(username)){
+          userFoundInCookies = buildKnownRestaurantFromDatabase(username);
+          loggedInUser = userFoundInCookies;
+          loggedInUsers.put(username, userFoundInCookies);
+        }
+      }
+  }
+  }
+
+     // ======================= DEPRECATED ==============================
+
+  // public ResultSet getUserByUsername(String username) {
+  //   try (Connection connection = dataSource.getConnection()) {
+  //     Statement stmt = connection.createStatement();
+  //     String sql = "SELECT * FROM Users WHERE username = '" + username + "'";
+  //     return stmt.executeQuery(sql);
+  //   }  catch (Exception e) {
+
+  //   }
+  // }
+
+  public boolean userExistsInDatabase(String username) throws SQLException {
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      String sql = "SELECT * FROM Users WHERE username = '" + username + "'";
+      ResultSet user =  stmt.executeQuery(sql);
+      if(!user.isBeforeFirst()){
+        return false;
+      }
+      user.next();
+      return true;
+
+    }  catch (Exception e) {
+      return false;
+    }
+    
+  }
+
+  public User buildKnownUserFromDatabase(String username) throws SQLException {
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      String sql = "SELECT * FROM Users WHERE username = '" + username + "'";
+      ResultSet user = stmt.executeQuery(sql);
+      User foundUser = new User();
+      foundUser.setUsername(user.getString("username"));
+      foundUser.setName(user.getString("name"));
+      foundUser.setEmail(user.getString("email"));
+      foundUser.setPassword(user.getString("password"));
+      return foundUser;
+    }  catch (Exception e) {
+      return new User();
+    }
+}
+
+
+  // ======================= DEPRECATED ==============================
+
+  // public ResultSet getDinerByUsername(String dinerUsername) {
+  //   try (Connection connection = dataSource.getConnection()) {
+  //     Statement stmt = connection.createStatement();
+  //     String sql = "SELECT * FROM Diners WHERE username = '" + dinerUsername + "'";
+  //     ResultSet r =  stmt.executeQuery(sql);
+  //     return r;
+  //   }  catch (Exception e) {
+
+  //   }
+  // }
+
+  public boolean dinerExistsInDatabase(String dinerUsername) throws SQLException {
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      String sql = "SELECT * FROM Diners WHERE username = '" + dinerUsername + "'";
+      ResultSet diner =  stmt.executeQuery(sql);
+    if(!diner.isBeforeFirst()){
+      return false;
+    }
+    diner.next();
+    return true;
+    }  catch (Exception e) {
+      return false;
+    }
+  }
+
+  public Diner buildKnownDinerFromDatabase(String dinerUsername) throws SQLException {
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      String sql = "SELECT * FROM Diners WHERE username = '" + dinerUsername + "'";
+      ResultSet diner =  stmt.executeQuery(sql);
+      Diner foundDiner = new Diner();
+      foundDiner.setUsername(diner.getString("username"));
+      foundDiner.setName(diner.getString("name"));
+      foundDiner.setEmail(diner.getString("email"));
+      foundDiner.setPassword(diner.getString("password"));
+      foundDiner.setExposed(Boolean.parseBoolean(diner.getString("exposed")));
+      foundDiner.setExposureDate((diner.getDate("exposure").toLocalDate()));
+      return foundDiner;
+    }  catch (Exception e) {
+      return new Diner();
+    }
+  }
+
+  public boolean restaurantExistsInDatabase(String username) {
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      String sql = "SELECT * FROM Restaurants WHERE username = '" + username + "'";
+      ResultSet restaurant =  stmt.executeQuery(sql);
+      if(!restaurant.isBeforeFirst()){
+        return false;
+      }
+      restaurant.next();
+      return true;
+
+    }  catch (Exception e) {
+      return false;
+    }
+    
+  }
+
+  public Restaurant buildKnownRestaurantFromDatabase(String username) {
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      String sql = "SELECT * FROM Restaurants WHERE username = '" + username + "'";
+      ResultSet restaurant = stmt.executeQuery(sql);
+      Restaurant foundRestaurant = new Restaurant();
+      foundRestaurant.setUsername(restaurant.getString("username"));
+      foundRestaurant.setName(restaurant.getString("name"));
+      foundRestaurant.setId(restaurant.getInt("id"));
+      foundRestaurant.setPassword(restaurant.getString("password"));
+      return foundRestaurant;
+    }  catch (Exception e) {
+      return new Restaurant();
+    }
+}
 
 }
