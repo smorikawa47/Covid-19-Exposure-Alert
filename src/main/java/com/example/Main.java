@@ -76,14 +76,18 @@ public class Main {
   private static Map<String, User> loggedInUsers = new HashMap<String, User>();
   private static List<String> defaultDineAlertTableNames = Arrays.asList("Users", "Diners", "Restaurants", "Dinings");
   private static User loggedInUser = new User();
-  private static final String SQL_DINERS_INITIALIZER = "CREATE TABLE IF NOT EXISTS Diners (id serial, username varchar(30), name varchar(16), email varchar(30), password varchar(30), exposed boolean, exposure date)";
-  private static final String SQL_RESTAURANTS_INITIALIZER = "CREATE TABLE IF NOT EXISTS Restaurants (id serial, name varchar(30), username varchar(16), password varchar(30), premium boolean)";
+  private static final String SQL_DINERS_INITIALIZER = "CREATE TABLE IF NOT EXISTS Diners (id serial, username varchar(30), name varchar(30), email varchar(30), password varchar(30), exposed boolean, exposure date, testresult boolean, testresultdate date)";
+  private static final String SQL_RESTAURANTS_INITIALIZER = "CREATE TABLE IF NOT EXISTS Restaurants (id serial, username varchar(30), name varchar(30), password varchar(30), premium boolean, exposure date, latitude float, longitude float)";
   private static final String SQL_DININGS_INITITALIZER = "CREATE TABLE IF NOT EXISTS Dinings (id serial, restaurant varchar(30), username varchar(30), name varchar(30), email varchar(30), time time, date date, exposed boolean)";
-  private static final String SQL_USERS_INITIALIZER = "CREATE TABLE IF NOT EXISTS Users (id serial, username varchar(30), name varchar(16), email varchar(30), password varchar(30), restaurant boolean)";
+  private static final String SQL_USERS_INITIALIZER = "CREATE TABLE IF NOT EXISTS Users (id serial, username varchar(30), name varchar(30), email varchar(30), password varchar(30), restaurant boolean)";
   private static final String USERNAME_DOES_NOT_EXIST = "Username not found in system.";
   private static final String PASSWORD_DOES_NOT_MATCH = "Password does not match.";
   private static final String USERNAME_ALREADY_IN_USE = "That username is already in use, please try another.";
   private static final String EMAIL_ALREADY_IN_USE = "That email is already in use, please try another!";
+  private static final String COVID_REPORTED = "You have reported a positive COVID-19 test result.";
+  private static final String COVID_EXPOSED = "A restaurant which you dined at in the past two weeks may have experienced a COVID-19 exposure!";
+  private static final String YOU_HAVE_NOT_DINED = "You haven't dined at any DineAlert restaurants yet!";
+  private static final String RESTAURANT_NOT_FOUND = "That restaurant has not registered with DineAlert yet!";
 
   public static void main(String[] args) throws Exception {
     SpringApplication.run(Main.class, args);
@@ -95,9 +99,10 @@ public class Main {
 
   @RequestMapping("/")
   String index(HttpServletRequest request, Map<String, Object> model) throws SQLException {
-    createDefaultDineAlertTables();
-    resetDatabaseTables(Arrays.asList("Ticks"));
-    refreshLoggedInUserFromCookies(request);
+    //destroyDatabaseTables(defaultDineAlertTableNames);      // These two utility functions are used to wipe or delete the database. Use them with caution.
+    //resetDatabaseTables(defaultDineAlertTableNames);        // To use them, uncomment them, run the app, and navigate to the index.
+    createDefaultDineAlertTables();                           // Creates the tables for the app, if they don't yet exist.
+    refreshLoggedInUserFromCookies(request);                  
     return "index";
   }
 
@@ -112,6 +117,8 @@ public class Main {
     model.put("restaurant", restaurant);
     return "home";
   }
+
+  //Log out of the app. Deletes the username cookie and nulls loggedInUser.
 
   @PostMapping("/logout")
   public String logout(HttpServletRequest request, HttpServletResponse response, Map<String, Object> model){
@@ -209,8 +216,7 @@ public class Main {
       System.out.println(sql2);
       ResultSet isDined = stmt.executeQuery(sql2);
       if(!isDined.isBeforeFirst()){
-        String message = "You haven't dined at a restaurant yet.";
-        model.put("message", message);
+        model.put("message", YOU_HAVE_NOT_DINED);
         return "reportlogin";
       }
       isDined.next();
@@ -251,17 +257,49 @@ public class Main {
   path = "/covidreport")
   public String reportCovidTestResult(HttpServletRequest request, HttpServletResponse response, Map<String, Object> model) throws SQLException {
     System.out.println("Reporting COVID-19...");
+    String sql = "";
     refreshLoggedInUserFromCookies(request);
     try (Connection connection = dataSource.getConnection()) {
       Statement stmt = connection.createStatement();
       stmt.executeUpdate(SQL_DININGS_INITITALIZER);
-      stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
-      String sql = "SELECT * FROM Dinings WHERE username = '" + loggedInUser.getUsername() + "'";
+      sql = "SELECT * FROM Dinings WHERE username = '" + loggedInUser.getUsername() + "'";
       ResultSet queriedDining = stmt.executeQuery(sql);
+      if(!queriedDining.isBeforeFirst()){
+        System.out.println("No dinings!");
+        // model.put("message", YOU_HAVE_NOT_DINED);
+        // model.put("diner", loggedInUser);
+        model.put("message", YOU_HAVE_NOT_DINED);
+        return getActionFromDinerLoginStatus(request, "redirect:/diningreport", "redirect:/index");
+      }
+      queriedDining.next();
 
+      ((Diner) loggedInUser).setTestResult(true);
+      LocalDate testResultDate = LocalDate.now();
+      //System.out.println(exposureDate);
+      ((Diner) loggedInUser).setTestResultDate(testResultDate);
+      Date sqlTestResultDate = java.sql.Date.valueOf(testResultDate);
+      LocalDate twoWeeksBeforeTestResult = testResultDate.plusDays(-14);
+      Date sqlTestResultDateMinusTwoWeeks = java.sql.Date.valueOf(twoWeeksBeforeTestResult);
+      //System.out.println(sqlExposureDate);
 
-    return "redirect:/diningreport";
+      sql = "UPDATE Dinings SET exposed = '" + ((Diner) loggedInUser).wasExposed() + "' WHERE Username = '" + loggedInUser.getUsername() + "' AND Date > '" + sqlTestResultDateMinusTwoWeeks +"'";
+      System.out.println(sql);
+      stmt.executeUpdate(sql);
+      
+      stmt.executeUpdate(SQL_DINERS_INITIALIZER);
+      stmt.executeUpdate("ALTER TABLE Diners ADD COLUMN IF NOT EXISTS exposed boolean");
+      sql = "UPDATE Diners SET testresult = '" + ((Diner) loggedInUser).getTestResult() + "' WHERE Username = '" + loggedInUser.getUsername() + "'";
+      System.out.println(sql);
+      stmt.executeUpdate(sql);
+      sql = "UPDATE Diners SET testresultdate = '" + sqlTestResultDate + "' WHERE Username = '" + loggedInUser.getUsername() + "'";
+      System.out.println(sql);
+      stmt.executeUpdate(sql);
+
+    model.put("message", COVID_REPORTED);
+    model.put("diner", loggedInUser);
+    return getActionFromDinerLoginStatus(request, "redirect:/diningreport", "redirect:/index");
     } catch (Exception e) {
+      System.out.println("An SQL Error occured: " + e.getMessage());
       return "error";
     }
   }
@@ -270,7 +308,8 @@ public class Main {
     path = "/dinerlogin",
     consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE}
     )
-  public String loginToDinerAccount(HttpServletResponse response, Map<String, Object> model, Diner diner) throws Exception {
+  public String loginToDinerAccount(HttpServletRequest request, HttpServletResponse response, Map<String, Object> model, Diner diner) throws Exception {
+    logout(request, response, model);
     try (Connection connection = dataSource.getConnection()) {
       Statement stmt = connection.createStatement();
       Diner d = new Diner();
@@ -306,17 +345,6 @@ public class Main {
       model.put("message", e.getMessage());
       return "error";
     }
-  }
-
-  private void login(HttpServletResponse response, User user) {
-    System.out.println("Setting user cookie...");
-    setCookie(response, "username", user.getUsername());
-    System.out.println("Cookie set.");
-    System.out.println("Current logged in users: " + loggedInUsers.toString());
-    System.out.println("Updating logged in users...");
-    loggedInUsers.put(user.getUsername(), user);
-    loggedInUser = user;
-    System.out.println("Current logged in users: " + loggedInUsers.toString());
   }
 
   @PostMapping("/createdineraccountpage")
@@ -376,10 +404,11 @@ public class Main {
       }
       usersWithMatchingEmail.next();
 
-      sql = "INSERT INTO Diners (username,name,email,password,exposed) VALUES ('" + diner.getUsername() + "', '" + diner.getName() + "', '" + diner.getEmail() + "', '" + diner.getPassword() + "', " + diner.wasExposed() + ")";
+     
+      sql = "INSERT INTO Diners (username,name,email,password,exposed,testresult) VALUES ('" + diner.getUsername() + "', '" + diner.getName() + "', '" + diner.getEmail() + "', '" + diner.getPassword() + "', " + diner.wasExposed() + ", false)";
       System.out.println(sql);
       stmt.executeUpdate(sql);
-      sql = "INSERT INTO Users (username,name,email,password,restaurant) VALUES ('" + diner.getUsername() + "', '" + diner.getName() + "', '" + diner.getEmail() + "', '" + diner.getPassword() + "' ," + diner.isRestaurant() + ")";
+      sql = "INSERT INTO Users (username,name,email,password,restaurant) VALUES ('" + diner.getUsername() + "', '" + diner.getName() + "', '" + diner.getEmail() + "', '" + diner.getPassword() + "', " + diner.isRestaurant() + ")";
       System.out.println(sql);
       stmt.executeUpdate(sql);
       //model.put("diner", diner);
@@ -408,7 +437,7 @@ public class Main {
   }
 
   @PostMapping("/diningreport")
-  public String reportDining(Map<String, Object> model, Dining dining){
+  public String reportDining(HttpServletRequest request, Map<String, Object> model, Dining dining){
     Date date = Date.valueOf(dining.getDate());
     Time time = Time.valueOf(dining.getTime());
     try (Connection connection = dataSource.getConnection()) {
@@ -416,7 +445,18 @@ public class Main {
       stmt.executeUpdate(SQL_DININGS_INITITALIZER);
       stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
       stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS username varchar(30)");
-      String sql = "INSERT INTO Dinings (restaurant,name,email,time,date,exposed) VALUES ('" + dining.getRestaurant() + "', '" + dining.getDinerUsername() + "', '" + dining.getDinerName() + "', '" + dining.getDinerEmail() + "', '" + time + "', '" + date + "', '" + dining.getDinerExposed() +"')";
+
+      String sql = "SELECT * FROM Restaurants WHERE name = '" + dining.getRestaurant() + "'";
+      ResultSet queriedRestaurant = stmt.executeQuery(sql);
+      if(!queriedRestaurant.isBeforeFirst()){
+        System.out.println("Attempting to dine at a restaurant that is not registered with DineAlert!");
+        model.put("message", RESTAURANT_NOT_FOUND);
+        return getActionFromDinerLoginStatus(request, "redirect:/diningreport", "redirect:/index");
+      }
+      queriedRestaurant.next();
+
+
+      sql = "INSERT INTO Dinings (restaurant, username, name,email,time,date,exposed) VALUES ('" + dining.getRestaurant() + "', '" + loggedInUser.getUsername() + "', '" + loggedInUser.getName() + "', '" + loggedInUser.getEmail() + "', '" + time + "', '" + date + "', '" + ((Diner) loggedInUser).wasExposed() +"')";
       System.out.println(sql);
       stmt.executeUpdate(sql);
       model.put("dining", dining);
@@ -446,7 +486,7 @@ public class Main {
     path = "/adminlogin",
     consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE}
     )
-  public String loginToAdminAccount(Map<String, Object> model, Restaurant restaurant) throws Exception {
+  public String loginToAdminAccount(HttpServletResponse response, Map<String, Object> model, Restaurant restaurant) throws Exception {
     try (Connection connection = dataSource.getConnection()) {
       Statement stmt = connection.createStatement();
       Restaurant r = new Restaurant();
@@ -461,8 +501,7 @@ public class Main {
       ResultSet queriedUser = stmt.executeQuery(sql);
 
       if(!queriedUser.isBeforeFirst()){
-        String message = "Username not found in system.";
-        model.put("message", message);
+        model.put("message", USERNAME_DOES_NOT_EXIST);
         return "adminlogin";
       }
       queriedUser.next();
@@ -471,11 +510,12 @@ public class Main {
       System.out.println(queriedPassword);
       System.out.println(restaurant.getPassword());
       if(!(restaurant.getPassword().equals(queriedPassword))){
-        String message = "Password does not match.";
-        model.put("message", message);
+        model.put("message", PASSWORD_DOES_NOT_MATCH);
         return "adminlogin";
       }
-      ResultSet restaurants = stmt.executeQuery("SELECT * FROM Restaurants WHERE username = '"+restaurant.getUsername()+"'");
+
+      login(response, restaurant);
+      ResultSet restaurants = stmt.executeQuery("SELECT * FROM Restaurants WHERE username = '"+ restaurant.getUsername() +"'");
       String restaurantName = "";
       while(restaurants.next()) {
         restaurantName = restaurants.getString("name");
@@ -575,22 +615,37 @@ public class Main {
   public String createAdminAccount(Map<String, Object> model, Restaurant restaurant){
     try (Connection connection = dataSource.getConnection()) {
       Statement stmt = connection.createStatement();
-      stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Restaurants (id serial, name varchar(30), username varchar(16), password varchar(30), premium boolean)");
+      stmt.executeUpdate(SQL_RESTAURANTS_INITIALIZER);
       
       //Check if the requested username exists in the database
       String sql = "SELECT * FROM Restaurants WHERE username = '" + restaurant.getUsername() + "'";
       ResultSet restaurantsWithMatchingName = stmt.executeQuery(sql);
       if(restaurantsWithMatchingName.isBeforeFirst()){
-        String message = "Username already exists, please try another.";
-        model.put("message", message);
+        model.put("message", USERNAME_ALREADY_IN_USE);
         return "createadminaccount";
       }
       restaurantsWithMatchingName.next();
 
-      sql = "INSERT INTO Restaurants (name,username,password,premium) VALUES ('" + restaurant.getName() + "', '" + restaurant.getUsername() + "', '" + restaurant.getPassword() + "', " + restaurant.getPremiumStatus() + ")";
+      //Check if the requested username exists in the Users database
+      stmt.executeUpdate(SQL_USERS_INITIALIZER);
+      sql = "SELECT * FROM Users WHERE username = '" + restaurant.getUsername() + "'";
+      ResultSet usersWithMatchingName = stmt.executeQuery(sql);
+      if(usersWithMatchingName.isBeforeFirst()){
+        model.put("message", USERNAME_ALREADY_IN_USE);
+        return "createdineraccount";
+      }
+      usersWithMatchingName.next();
+
+      sql = "INSERT INTO Restaurants (name,username,password,premium,latitude,longitude) VALUES ('" + restaurant.getName() + "', '" + restaurant.getUsername() + "', '" + restaurant.getPassword() + "', " + restaurant.getPremiumStatus() + ", " + restaurant.getLatitude() + ", " + restaurant.getLongitude() + ")";
       System.out.println(sql);
       stmt.executeUpdate(sql);
-      stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Dinings (id serial, restaurant varchar(30), name varchar(30), email varchar(30), time time, date date, exposed boolean)");
+
+      sql = "INSERT INTO Users (username,name,email,password,restaurant) VALUES ('" + restaurant.getUsername() + "', '" + restaurant.getName() + "', '" + restaurant.getEmail() + "', '" + restaurant.getPassword() + "', " + restaurant.isRestaurant() + ")";
+      System.out.println(sql);
+      stmt.executeUpdate(sql);
+
+
+      stmt.executeUpdate(SQL_DININGS_INITITALIZER);
       stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
       ResultSet diner = stmt.executeQuery("SELECT * FROM Dinings WHERE restaurant = '"+ restaurant.getName() +"'");
         List<List<String>> recs = new ArrayList<>();
@@ -627,6 +682,8 @@ public class Main {
     }
   }
 
+  // Drops tables specified by a list of names.
+
   public void destroyDatabaseTables(List<String> tables){
     System.out.println("Dropping " + tables.size() + " database tables...");
     for(String table:tables){
@@ -640,6 +697,8 @@ public class Main {
       }
     }
   }
+
+  // Empties tables specified by a list of names without dropping them, using TRUNCATE.
     
   public void resetDatabaseTables(List<String> tables){
     System.out.println("Emptying " + tables.size() + " database tables...");
@@ -654,6 +713,8 @@ public class Main {
       }
     }
   }
+
+  // Creates the default tables for the app. Run this any time.
 
   private void createDefaultDineAlertTables(){
     String sql = "";
@@ -676,6 +737,21 @@ public class Main {
     }
   }
 
+  // Login to the app. Set up the cookie and loggedInUser.
+
+  private void login(HttpServletResponse response, User user) {
+    System.out.println("Setting user cookie...");
+    setCookie(response, "username", user.getUsername());
+    System.out.println("Cookie set.");
+    System.out.println("Current logged in users: " + loggedInUsers.toString());
+    System.out.println("Updating logged in users...");
+    loggedInUsers.put(user.getUsername(), user);
+    loggedInUser = user;
+    System.out.println("Current logged in users: " + loggedInUsers.toString());
+  }
+
+    // Determines whether or not to redirect a user to an Diner access only page or to the Diner login screen based on the status of loggedInUser.
+
   public String getActionFromDinerLoginStatus(HttpServletRequest request, String pageWithAccess, String pageWithoutAccess){
     System.out.println("Determining redirect based on diner login status...");
     if(savedUsernameExistsInCookies(request, "username")){
@@ -694,6 +770,7 @@ public class Main {
     }
   }
     
+  // Determines whether or not to redirect a user to a Restaurant access only page or to the Restaurant login screen based on the status of loggedInUser.
 
   public String getActionFromRestaurantLoginStatus(HttpServletRequest request, String pageWithAccess, String pageWithoutAccess){
     System.out.println("Determining redirect based on restaurant login status...");
@@ -712,10 +789,14 @@ public class Main {
     }
   }
 
+  // Deletes specifically the username cookied. Redundant.
+
   public void deleteUsernameCookie(HttpServletResponse response){
     System.out.println("Deleting username cookie...");
     deleteCookie(response, "username");
   }
+
+  // Sets the cookie of a given name to a given value.
 
   public void setCookie(HttpServletResponse response, String cookieName, String cookieValue){
     System.out.println("Setting the cookie " + cookieName + " to " + cookieValue + "...");
@@ -723,9 +804,13 @@ public class Main {
     response.addCookie(cookie);
   }
 
-  public String getUsernameCookie(@CookieValue(value = "username", defaultValue = "No username cookie!") String cookieVal){
-    return cookieVal;
-  }
+  // Deprecated.
+
+  // public String getUsernameCookie(@CookieValue(value = "username", defaultValue = "No username cookie!") String cookieVal){
+  //   return cookieVal;
+  // }
+
+  // Retrieves the stored value from the 'username' cookie.
 
   public String getCookieString(HttpServletRequest request, String cookieName){
     System.out.println("Getting value of cookie " + cookieName + "...");
@@ -733,6 +818,8 @@ public class Main {
     System.out.println("The value of " + cookieName + " was " + cookie.getValue());
     return cookie.getValue();
   }
+
+  // Checks if there is a cookie called 'username'.
 
   public boolean savedUsernameExistsInCookies(HttpServletRequest request, String cookieName){
     System.out.println("Checking if " + cookieName + " exists in the cookies...");
@@ -744,12 +831,16 @@ public class Main {
     else return false;
   }
 
+  // Deletes a cookie with a given name.
+
   public void deleteCookie(HttpServletResponse response, String cookieName){
     System.out.println("Deleting cookie " + cookieName + "...");
     Cookie cookie = new Cookie(cookieName, null);
     cookie.setMaxAge(0);
     response.addCookie(cookie);
   }
+
+  // Checks if the username cookie in the browser exists and matches the username of the loggedInUser.
 
   public boolean cookieMatchesUser(HttpServletRequest request){
     if(Objects.nonNull(loggedInUser)){
@@ -763,6 +854,11 @@ public class Main {
     return false;
     }
 
+
+  // Checks if the name of the loggedInUser already matches the cookie. If it doesn't;
+  // Checks if the cookie exists at all;
+  // Invokes update function.
+
   public void refreshLoggedInUserFromCookies(HttpServletRequest request) throws SQLException{
     System.out.println("Checking if user needs to be updated...");
     if(!cookieMatchesUser(request)){
@@ -772,6 +868,8 @@ public class Main {
       }
     }
   }
+
+  // Creates a new logginInUser based on the discovered cookie, assuming it can find matching database entries.
 
   public void updateLoggedInUserFromCookies(HttpServletRequest request) throws SQLException{
     System.out.println("Pulling logged in user from cookies...");
@@ -809,6 +907,8 @@ public class Main {
   //   }
   // }
 
+  // Checks the Users database for an entry matching the given username.
+
   public boolean userExistsInDatabase(String username) throws SQLException {
     System.out.println("Checking for a user with username " + username + " in the Users database...");
     try (Connection connection = dataSource.getConnection()) {
@@ -829,6 +929,8 @@ public class Main {
     }
     
   }
+
+  // Constructs a User object based on database query results.
 
   public User buildKnownUserFromDatabase(String username) throws SQLException {
     System.out.println("Creating a User from the database entry for the User with username " + username);
@@ -862,6 +964,8 @@ public class Main {
   //   }
   // }
 
+    // Checks the Diners database for an entry matching the given username.
+
   public boolean dinerExistsInDatabase(String dinerUsername) throws SQLException {
     System.out.println("Checking for a diner with diner username " + dinerUsername + " in the Diners database...");
     try (Connection connection = dataSource.getConnection()) {
@@ -879,6 +983,8 @@ public class Main {
       return false;
     }
   }
+
+  // Constructs a Diner object based on query results.
 
   public Diner buildKnownDinerFromDatabase(String dinerUsername) throws SQLException {
     System.out.println("Creating a Diner from the database entry for the Diner with username " + dinerUsername);
@@ -921,6 +1027,8 @@ public class Main {
     }
   }
 
+    // Checks the Restaurants database for an entry matching the given username.
+
   public boolean restaurantExistsInDatabase(String username) {
     System.out.println("Checking for a Restaurant with username " + username + " in the Restaurants database...");
     try (Connection connection = dataSource.getConnection()) {
@@ -941,20 +1049,25 @@ public class Main {
     
   }
 
+    // Constructs a Restaurant object based on query results.
+
   public Restaurant buildKnownRestaurantFromDatabase(String username) {
     System.out.println("Creating a Restaurant from the database entry for the Restaurant with username " + username);
     try (Connection connection = dataSource.getConnection()) {
       Statement stmt = connection.createStatement();
       String sql = "SELECT * FROM Restaurants WHERE username = '" + username + "'";
       ResultSet restaurant = stmt.executeQuery(sql);
+      restaurant.next();
       Restaurant foundRestaurant = new Restaurant();
       foundRestaurant.setUsername(restaurant.getString("username"));
       foundRestaurant.setName(restaurant.getString("name"));
       foundRestaurant.setId(restaurant.getInt("id"));
       foundRestaurant.setPassword(restaurant.getString("password"));
+      foundRestaurant.setLatitude(restaurant.getFloat("latitude"));
+      foundRestaurant.setLongitude(restaurant.getFloat("longitude"));
       return foundRestaurant;
     }  catch (Exception e) {
-      System.out.println("An SQL error occurred attempting to build a Diner.");
+      System.out.println("An SQL error occurred attempting to build a Restaurant.");
       return new Restaurant();
     }
 }

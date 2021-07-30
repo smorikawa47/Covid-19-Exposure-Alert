@@ -25,6 +25,11 @@
                         Password <br>
                         <input type = "password" th:field=*{password} required>
                     </label>
+                    <label>
+                        Coordinates <br>
+                        <input type = "number" th:field=*{latitude} required>
+                        <input type = "number" th:field=*{longitude} required>
+                    </label>
                     <input type = "submit" value="Create account">
                 </form>
                 <div id="CreateAccountMessagesDiv">
