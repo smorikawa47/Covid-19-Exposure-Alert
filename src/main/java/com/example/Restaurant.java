@@ -8,6 +8,15 @@ public class Restaurant extends User {
         this.premium = false;
     }
 
+    public Restaurant(Restaurant otherRestaurant){
+        this.setName(otherRestaurant.getName());
+        this.setUsername(otherRestaurant.getUsername());
+        this.setEmail(otherRestaurant.getEmail());
+        this.setPassword(otherRestaurant.getPassword());
+        this.setId(otherRestaurant.getId());
+        this.setPremiumStatus(otherRestaurant.getPremiumStatus());
+    }
+
     public int getId() {
         return this.id;
     }

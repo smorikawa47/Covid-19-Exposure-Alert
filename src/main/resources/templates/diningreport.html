@@ -34,8 +34,12 @@
                 <td><input type ="submit" value="Return to home" class = "backButton"/></td>
             </form>
 
-            <form id = "createUserAccount" th:action = "@{logout}" method = "post">
+            <form id = "logout" th:action = "@{logout}" method = "post">
                 <td><input type ="submit" value="Log out" class = "logout"/></td>
+            </form>
+
+            <form id = "reportCovid" th:action = "@{covidreport}" method = "post">
+                <td><input type="submit" value="I have tested positive for COVID-19" class ="reportCovid" onclick="return confirm('Are you sure you wish to report that you have tested positive for COVID-19?')" /></td>
             </form>
         </div>
     </div>
