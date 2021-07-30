@@ -335,8 +335,9 @@ public class Main {
         return "dinerlogin";
       }
       
-      login(response, diner);
-      System.out.println("Adding the diner " + diner + " to the model...");
+      Diner dinerToLogin = buildKnownDinerFromDatabase(diner.getUsername());
+      login(response, dinerToLogin);
+      System.out.println("Adding the diner " + dinerToLogin + " to the model...");
       model.put("diner", d);
       System.out.println("Redirecting...");
       return "redirect:/diningreport";
@@ -468,12 +469,12 @@ public class Main {
   }
 
 
-    @PostMapping("/adminloginpage")
-    public String adminLoginPage(Map<String, Object> model){
-      Restaurant restaurant = new Restaurant();
-      model.put("restaurant", restaurant);
-      return "adminlogin";
-    }
+  @PostMapping("/adminloginpage")
+  public String adminLoginPage(Map<String, Object> model){
+    Restaurant restaurant = new Restaurant();
+    model.put("restaurant", restaurant);
+    return "adminlogin";
+  }
 
   @GetMapping("/adminlogin")
   public String adminLogin(Map<String, Object> model){
@@ -486,7 +487,8 @@ public class Main {
     path = "/adminlogin",
     consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE}
     )
-  public String loginToAdminAccount(HttpServletResponse response, Map<String, Object> model, Restaurant restaurant) throws Exception {
+  public String loginToAdminAccount(HttpServletRequest request, HttpServletResponse response, Map<String, Object> model, Restaurant restaurant) throws Exception {
+    logout(request, response, model);
     try (Connection connection = dataSource.getConnection()) {
       Statement stmt = connection.createStatement();
       Restaurant r = new Restaurant();
@@ -514,35 +516,36 @@ public class Main {
         return "adminlogin";
       }
 
-      login(response, restaurant);
-      ResultSet restaurants = stmt.executeQuery("SELECT * FROM Restaurants WHERE username = '"+ restaurant.getUsername() +"'");
-      String restaurantName = "";
-      while(restaurants.next()) {
-        restaurantName = restaurants.getString("name");
-      }
-      stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Dinings (id serial, restaurant varchar(30), name varchar(30), email varchar(30), time time, date date, exposed boolean)");
-      stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
-      ResultSet diner = stmt.executeQuery("SELECT * FROM Dinings WHERE restaurant = '" +restaurantName+ "'");
-      List<List<String>> recs = new ArrayList<>();
-      while(diner.next()){
-        String id = diner.getString("id");
-        String name = diner.getString("name");
-        String email = diner.getString("email");
-        String time = diner.getString("time");
-        String date = diner.getString("date");
-        String exposed = diner.getString("exposed");
-        ArrayList<String> rec = new ArrayList<>();
-        rec.add(id);
-        rec.add(name);
-        rec.add(email);
-        rec.add(time);
-        rec.add(date);
-        rec.add(exposed);
-        recs.add(rec);
-      }
-      model.put("recs", recs);
-
-      return "home";
+      Restaurant restaurantToLogin = buildKnownRestaurantFromDatabase(restaurant.getUsername());
+      login(response, restaurantToLogin);
+      // ResultSet restaurants = stmt.executeQuery("SELECT * FROM Restaurants WHERE username = '"+ restaurant.getUsername() +"'");
+      // String restaurantName = "";
+      // while(restaurants.next()) {
+      //   restaurantName = restaurants.getString("name");
+      // }
+      // stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Dinings (id serial, restaurant varchar(30), name varchar(30), email varchar(30), time time, date date, exposed boolean)");
+      // stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
+      // ResultSet diner = stmt.executeQuery("SELECT * FROM Dinings WHERE restaurant = '" +restaurantName+ "'");
+      // List<List<String>> recs = new ArrayList<>();
+      // while(diner.next()){
+      //   String id = diner.getString("id");
+      //   String name = diner.getString("name");
+      //   String email = diner.getString("email");
+      //   String time = diner.getString("time");
+      //   String date = diner.getString("date");
+      //   String exposed = diner.getString("exposed");
+      //   ArrayList<String> rec = new ArrayList<>();
+      //   rec.add(id);
+      //   rec.add(name);
+      //   rec.add(email);
+      //   rec.add(time);
+      //   rec.add(date);
+      //   rec.add(exposed);
+      //   recs.add(rec);
+      // }
+      // model.put("recs", recs);
+      System.out.println("Redirecting to admin home page...");
+      return "redirect:/adminhomepage";
     }  catch (Exception e) {
       model.put("message", e.getMessage());
       return "error";
@@ -645,12 +648,51 @@ public class Main {
       stmt.executeUpdate(sql);
 
 
+      // stmt.executeUpdate(SQL_DININGS_INITITALIZER);
+      // stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
+      // ResultSet diner = stmt.executeQuery("SELECT * FROM Dinings WHERE restaurant = '"+ restaurant.getName() +"'");
+      //   List<List<String>> recs = new ArrayList<>();
+      //   while(diner.next()){
+      //     String id = diner.getString("id");
+      //   String name = diner.getString("name");
+      //   String email = diner.getString("email");
+      //   String time = diner.getString("time");
+      //   String date = diner.getString("date");
+      //   ArrayList<String> rec = new ArrayList<>();
+      //   rec.add(id);
+      //   rec.add(name);
+      //   rec.add(email);
+      //   rec.add(time);
+      //   rec.add(date);
+      //   recs.add(rec);
+      // }
+      // model.put("recs", recs);
+      return "redirect:/adminlogin";
+    }  catch (Exception e) {
+      model.put("message", e.getMessage());
+      return "error";
+    }
+  }
+
+  @RequestMapping("/adminhomepage")
+  public String getAdminHomepage(HttpServletRequest request, HttpServletResponse response, Map<String, Object> model){
+    System.out.println("Getting dining admim home page...");
+    Dining dining = new Dining();
+    model.put("dining", dining);
+    return getActionFromRestaurantLoginStatus(request, "redirect:/adminhome", "adminlogin");
+  }
+
+  @RequestMapping("/adminhome")
+  public String prepareAdminHomepage(HttpServletRequest request, HttpServletResponse response, Map<String, Object> model){
+    System.out.println("Preparing admin data table...");
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
       stmt.executeUpdate(SQL_DININGS_INITITALIZER);
       stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
-      ResultSet diner = stmt.executeQuery("SELECT * FROM Dinings WHERE restaurant = '"+ restaurant.getName() +"'");
+      ResultSet diner = stmt.executeQuery("SELECT * FROM Dinings WHERE restaurant = '"+ loggedInUser.getName() +"'");
         List<List<String>> recs = new ArrayList<>();
         while(diner.next()){
-          String id = diner.getString("id");
+        String id = diner.getString("id");
         String name = diner.getString("name");
         String email = diner.getString("email");
         String time = diner.getString("time");
@@ -779,7 +821,7 @@ public class Main {
       System.out.println(cookie);
       if(loggedInUsers.containsKey(cookie) && loggedInUser.isRestaurant()){
         loggedInUser = loggedInUsers.get(cookie);
-        System.out.println("The logged in user is: " + loggedInUser.getUsername());
+        System.out.println("The logged in Restaurant is: " + loggedInUser.getUsername());
         return pageWithAccess;
       } else {
         return "redirect:/" + pageWithoutAccess;
