@@ -192,7 +192,7 @@ public class Main {
       System.out.println(d);
       diner.setExposed(true);
       stmt.executeUpdate(SQL_DINERS_INITIALIZER);
-      stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
+      //stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
       String sql = "SELECT * FROM Diners WHERE username = '" + diner.getUsername() + "'";
       System.out.println(sql);
       ResultSet queriedUser = stmt.executeQuery(sql);
@@ -282,12 +282,12 @@ public class Main {
       Date sqlTestResultDateMinusTwoWeeks = java.sql.Date.valueOf(twoWeeksBeforeTestResult);
       //System.out.println(sqlExposureDate);
 
-      sql = "UPDATE Dinings SET exposed = '" + ((Diner) loggedInUser).wasExposed() + "' WHERE Username = '" + loggedInUser.getUsername() + "' AND Date > '" + sqlTestResultDateMinusTwoWeeks +"'";
+      sql = "UPDATE Dinings SET exposed = '" + ((Diner) loggedInUser).getTestResult() + "' WHERE Username = '" + loggedInUser.getUsername() + "' AND Date > '" + sqlTestResultDateMinusTwoWeeks +"'";
       System.out.println(sql);
       stmt.executeUpdate(sql);
       
       stmt.executeUpdate(SQL_DINERS_INITIALIZER);
-      stmt.executeUpdate("ALTER TABLE Diners ADD COLUMN IF NOT EXISTS exposed boolean");
+      //stmt.executeUpdate("ALTER TABLE Diners ADD COLUMN IF NOT EXISTS exposed boolean");
       sql = "UPDATE Diners SET testresult = '" + ((Diner) loggedInUser).getTestResult() + "' WHERE Username = '" + loggedInUser.getUsername() + "'";
       System.out.println(sql);
       stmt.executeUpdate(sql);
@@ -444,8 +444,8 @@ public class Main {
     try (Connection connection = dataSource.getConnection()) {
       Statement stmt = connection.createStatement();
       stmt.executeUpdate(SQL_DININGS_INITITALIZER);
-      stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
-      stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS username varchar(30)");
+      //stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
+      //stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS username varchar(30)");
 
       String sql = "SELECT * FROM Restaurants WHERE name = '" + dining.getRestaurant() + "'";
       ResultSet queriedRestaurant = stmt.executeQuery(sql);
@@ -635,7 +635,7 @@ public class Main {
       ResultSet usersWithMatchingName = stmt.executeQuery(sql);
       if(usersWithMatchingName.isBeforeFirst()){
         model.put("message", USERNAME_ALREADY_IN_USE);
-        return "createdineraccount";
+        return "createadminaccount";
       }
       usersWithMatchingName.next();
 
@@ -688,7 +688,7 @@ public class Main {
     try (Connection connection = dataSource.getConnection()) {
       Statement stmt = connection.createStatement();
       stmt.executeUpdate(SQL_DININGS_INITITALIZER);
-      stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
+      //stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
       ResultSet diner = stmt.executeQuery("SELECT * FROM Dinings WHERE restaurant = '"+ loggedInUser.getName() +"'");
         List<List<String>> recs = new ArrayList<>();
         while(diner.next()){
