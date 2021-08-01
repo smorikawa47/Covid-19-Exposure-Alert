@@ -12,10 +12,21 @@
 <div id="map" class="map"></div>
 <script>
     function initMap(){
-    var options = {zoom:8, center:{lat:42.2827, lng:-123.1207}}
+    var options = {zoom:8, center:{lat:49.2820, lng:-123.1171}}
     var map = new google.maps.Map(document.getElementById("map"), options);
-    console.log("initMap() running")
+        function addRedMarker(coord){
+            var marker = new google.maps.Marker({position:coord, map:map, icon:'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|FE7569'});
+
+        }
+        function addGreenMarker(coord){
+            var marker = new google.maps.Marker({position:coord, map:map, icon:'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|00FF00'});
+        }
+        addRedMarker({lat:49.2820, lng:-123.1171});
+        addGreenMarker({lat:49.0000, lng:-123.0000});
     }
+
+
+
 </script>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASo6THrWFZEbKpE1Gfbsl8pfuBTHUhmBI&callback=initMap"></script>
 <div id="test"></div>
