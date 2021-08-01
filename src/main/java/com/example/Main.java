@@ -697,12 +697,14 @@ public class Main {
         String email = diner.getString("email");
         String time = diner.getString("time");
         String date = diner.getString("date");
+        String exposed = diner.getString("exposed");
         ArrayList<String> rec = new ArrayList<>();
         rec.add(id);
         rec.add(name);
         rec.add(email);
         rec.add(time);
         rec.add(date);
+        rec.add(exposed);
         recs.add(rec);
       }
       model.put("recs", recs);
