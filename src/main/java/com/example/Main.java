@@ -714,7 +714,10 @@ public class Main {
       return "error";
     }
   }
-
+  @GetMapping("/map")
+  public String googleMap(){
+    return "map";
+  }
   @Bean
   public DataSource dataSource() throws SQLException {
     if (dbUrl == null || dbUrl.isEmpty()) {
