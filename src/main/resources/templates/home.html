@@ -38,8 +38,12 @@
                     </td>
                 </tr>
             </table>
-            <form id = "LogOutAdmin" th:action = "@{/}" method="post">
-                <td><input type ="submit" value="Log Out" class = "backButton"/></td>
+            <form id = "Return to home" th:action = "@{/}" method="post">
+                <td><input type ="submit" value="Return to Home" class = "backButton"/></td>
+            </form>
+
+            <form id = "Log out" th:action = "@{logout}" method="post">
+                <td><input type ="submit" value="Log out" class = "logoutButton"/></td>
             </form>
         
   </div>

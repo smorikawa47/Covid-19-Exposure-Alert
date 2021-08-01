@@ -5,6 +5,7 @@ public class Dining {
     private String restaurant;
     private LocalTime time;
     private LocalDate date;
+    private String dinerUsername;
     private String dinerName;
     private String dinerEmail;
     private Boolean dinerExposed;
@@ -31,6 +32,10 @@ public class Dining {
         return this.date;
     }
 
+    public String getDinerUsername() {
+        return this.dinerUsername;
+    }
+
     public String getDinerName() {
         return this.dinerName;
     }
@@ -53,6 +58,10 @@ public class Dining {
 
     public void setDate(LocalDate date) {
         this.date = date;
+    }
+
+    public void setDinerUsername(String username) {
+        this.dinerUsername = username;
     }
 
     public void setDinerName(String name) {

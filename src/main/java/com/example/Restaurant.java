@@ -1,53 +1,82 @@
 package com.example;
 
-public class Restaurant {
-    private String name;
+import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
+
+
+public class Restaurant extends User {
     private int id;
-    private String username;
-    private String password;
     private boolean premium;
+    private LocalDate exposure;
+    private float latitude;
+    private float longitude;
 
     public Restaurant() {
         this.premium = false;
     }
 
-    public String getName() {
-        return this.name;
+    public Restaurant(Restaurant otherRestaurant){
+        this.setName(otherRestaurant.getName());
+        this.setUsername(otherRestaurant.getUsername());
+        this.setEmail(otherRestaurant.getEmail());
+        this.setPassword(otherRestaurant.getPassword());
+        this.setId(otherRestaurant.getId());
+        this.setPremiumStatus(otherRestaurant.getPremiumStatus());
+        this.setExposureDate(otherRestaurant.getExposureDate());
+        this.setCoordinates(otherRestaurant.getCoordinates().get(0), otherRestaurant.getCoordinates().get(1));
+    }
+
+    public boolean hadRecentExposure(){
+        return (this.exposure.plusDays(14).isBefore(LocalDate.now()));
     }
 
     public int getId() {
         return this.id;
     }
 
-    public String getUsername() {
-        return this.username;
-    }
-
-    public String getPassword(){
-        return this.password;
-    }
-
     public boolean getPremiumStatus(){
         return this.premium;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public LocalDate getExposureDate(){
+        return this.exposure;
+    }
+
+    public List<Float> getCoordinates(){
+        return Arrays.asList(this.latitude, this.longitude);
+    }
+
+    public float getLatitude(){
+        return this.latitude;
+    }
+
+    public float getLongitude(){
+        return this.longitude;
     }
 
     public void setId(int id) {
         this.id = id;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
     public void setPremiumStatus(boolean status){
         this.premium = status;
+    }
+
+    public void setExposureDate(LocalDate date){
+        this.exposure = date;
+    }
+
+    public void setCoordinates(float latitude, float longitude){
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
+
+    public void setLatitude(float latitude){
+        this.latitude = latitude;
+    }
+
+    public void setLongitude(float longitude){
+        this.longitude = longitude;
     }
 }
