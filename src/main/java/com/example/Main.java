@@ -18,6 +18,9 @@ package com.example;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+
+import org.apache.tomcat.jni.Local;
+import org.apache.tomcat.util.buf.UEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -298,6 +301,7 @@ public class Main {
       stmt.executeUpdate(SQL_RESTAURANTS_INITIALIZER);
       Map<String, LocalDate> recentDinings = getRestaurantsAUserHasDinedAtRecently(loggedInUser.getUsername(), testResultDate);
       updateRestaurantExposures(recentDinings);
+      updateDinerExposures(recentDinings);
       model.put("message", COVID_REPORTED);
       model.put("diner", loggedInUser);
       return getActionFromDinerLoginStatus(request, "redirect:/diningreport", "redirect:/index");
@@ -342,6 +346,50 @@ public class Main {
       } 
     } catch (Exception e){
       System.out.println("An SQL Error occured: " + e.getMessage());
+    }
+  }
+
+  public Map<String, LocalDate> getDinersWhoRecentlyDinedAtARestaurant(String restaurantName){
+    Date twoWeeksAgo = Date.valueOf(LocalDate.now().plusDays(-14));
+    Map<String, LocalDate> diners = new HashMap<String, LocalDate>();
+    try(Connection connection = dataSource.getConnection()){
+      Statement stmt = connection.createStatement();
+      String sql = "SELECT Username, date FROM Dinings WHERE Restaurant = '" + restaurantName + "' AND Date > '" + twoWeeksAgo + "'";
+      ResultSet queriedDiners = stmt.executeQuery(sql);
+      while(queriedDiners.next()){
+        String username = queriedDiners.getString("username");
+        LocalDate dateDined = queriedDiners.getDate("date").toLocalDate();
+        System.out.println(username + " dined at " + restaurantName + " within the past two weeks, on " + dateDined);
+        diners.put(username, dateDined);
+      }
+      return diners;
+    } catch (Exception e){
+      System.out.println("An SQL Error occured: " + e.getMessage());
+      return diners;
+    }
+  }
+
+  public void updateDinerExposuresForRestaurant(Map<String, LocalDate> dinings){
+    try(Connection connection = dataSource.getConnection()){
+      Statement stmt = connection.createStatement();
+      String sql = "";
+      for (Map.Entry<String, LocalDate> entry : dinings.entrySet()) {
+        String username = entry.getKey();
+        Date sqlDate = Date.valueOf(entry.getValue());
+        sql = "UPDATE Diners SET exposed = true WHERE username = '" + username + "'";
+        stmt.executeUpdate(sql);
+        sql = "UPDATE Diners SET exposure = '" + sqlDate + "' WHERE username = '" + username + "'";
+        stmt.executeUpdate(sql);
+      } 
+    } catch (Exception e){
+      System.out.println("An SQL Error occured: " + e.getMessage());
+    }
+  }
+
+  public void updateDinerExposures(Map<String, LocalDate> restaurants) {
+    for (String restaurant : restaurants.keySet()) {
+      Map<String, LocalDate> dinings = getDinersWhoRecentlyDinedAtARestaurant(restaurant);
+      updateDinerExposuresForRestaurant(dinings);
     }
   }
 
