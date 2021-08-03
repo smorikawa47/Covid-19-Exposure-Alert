@@ -295,12 +295,53 @@ public class Main {
       System.out.println(sql);
       stmt.executeUpdate(sql);
 
-    model.put("message", COVID_REPORTED);
-    model.put("diner", loggedInUser);
-    return getActionFromDinerLoginStatus(request, "redirect:/diningreport", "redirect:/index");
+      stmt.executeUpdate(SQL_RESTAURANTS_INITIALIZER);
+      Map<String, LocalDate> recentDinings = getRestaurantsAUserHasDinedAtRecently(loggedInUser.getUsername(), testResultDate);
+      updateRestaurantExposures(recentDinings);
+      model.put("message", COVID_REPORTED);
+      model.put("diner", loggedInUser);
+      return getActionFromDinerLoginStatus(request, "redirect:/diningreport", "redirect:/index");
     } catch (Exception e) {
       System.out.println("An SQL Error occured: " + e.getMessage());
       return "error";
+    }
+  }
+
+  public Map<String, LocalDate> getRestaurantsAUserHasDinedAtRecently(String username, LocalDate dateOfTestResult){
+    Map<String, LocalDate> restaurants = new HashMap<>();
+    System.out.println("Finding recent restaurants...");
+    try (Connection connection = dataSource.getConnection()){
+        Statement stmt = connection.createStatement();
+        Date sqlDateOfDiningMinusTwoWeeks = Date.valueOf(dateOfTestResult.plusDays(-14));
+        String sql = "SELECT Restaurant, Date FROM Dinings WHERE Username = '" + username + "' AND Date > '" + sqlDateOfDiningMinusTwoWeeks + "'";
+        ResultSet queriedRestaurants = stmt.executeQuery(sql);
+        System.out.println("Found the following restaurants: " + queriedRestaurants.toString());
+        while(queriedRestaurants.next()){
+          String restaurant = queriedRestaurants.getString("restaurant");
+          LocalDate dateDined = queriedRestaurants.getDate("date").toLocalDate();
+          System.out.println(username + " recently dined at " + restaurant + " on " + dateDined.toString() + "!");
+          restaurants.put(restaurant, dateDined);
+        }
+        return restaurants;
+      
+    } catch (Exception e) {
+      System.out.println("An SQL Error occured: " + e.getMessage());
+      return restaurants;
+    }
+  }
+
+  public void updateRestaurantExposures(Map<String, LocalDate> dinings){
+    try(Connection connection = dataSource.getConnection()){
+      Statement stmt = connection.createStatement();
+      String sql = "";
+      for (Map.Entry<String, LocalDate> entry : dinings.entrySet()) {
+        String restaurantName = entry.getKey();
+        Date sqlDate = Date.valueOf(entry.getValue());
+        sql = "UPDATE Restaurants SET exposure = '" + sqlDate + "' WHERE name = '" + restaurantName + "'";
+        stmt.executeUpdate(sql);
+      } 
+    } catch (Exception e){
+      System.out.println("An SQL Error occured: " + e.getMessage());
     }
   }
 
