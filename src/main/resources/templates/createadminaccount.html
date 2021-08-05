@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -27,8 +27,8 @@
                     </label>
                     <label>
                         Coordinates <br>
-                        <input type = "number" th:field=*{latitude} required>
-                        <input type = "number" th:field=*{longitude} required>
+                        <input type = "number" th:field=*{latitude} step="0.0001" placeholder="latitude" required>
+                        <input type = "number" th:field=*{longitude} step="0.0001" placeholder="longitude" required>
                     </label>
                     <input type = "submit" value="Create account">
                 </form>

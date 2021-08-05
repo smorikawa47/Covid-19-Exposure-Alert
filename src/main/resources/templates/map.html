@@ -5,24 +5,48 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" th:href="@{/stylesheets/map.css}" >
+    <link rel="stylesheet" type="text/css" th:href="@{/stylesheets/DineAlert_gaelan.css}">
     <title>My Google Map</title>
 </head>
 <body>
-<h1>My Google Map</h1>
+<h1>Covid Map</h1>
 <div id="map" class="map"></div>
-<script>
+<script type="text/javascript" th:inline="javascript">
     function initMap(){
-    var options = {zoom:8, center:{lat:49.2820, lng:-123.1171}}
+    var options = {zoom:10, center:{lat:49.2820, lng:-123.1171}}
     var map = new google.maps.Map(document.getElementById("map"), options);
-        function addRedMarker(coord){
-            var marker = new google.maps.Marker({position:coord, map:map, icon:'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|FE7569'});
 
+        function addRedMarker(coord, name){
+            var marker = new google.maps.Marker({position:coord, map:map, icon:'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|FE7569'});
+            var infoWindow = new google.maps.InfoWindow({content:'<h3>'+name+'</h3>'});
+            marker.addListener('click', function(){
+                infoWindow.open(map, marker);
+            });
         }
-        function addGreenMarker(coord){
+        function addGreenMarker(coord, name){
             var marker = new google.maps.Marker({position:coord, map:map, icon:'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|00FF00'});
+            var infoWindow = new google.maps.InfoWindow({content:'<h3>'+name+'</h3>'});
+            marker.addListener('click', function(){
+                infoWindow.open(map, marker);
+            });
         }
-        //addRedMarker({lat:49.2820, lng:-123.1171});
-        //addGreenMarker({lat:49.0000, lng:-123.0000});
+        /*<![CDATA[*/
+    var theList = [[${recs}]]
+    var redNames = [[${redNames}]]
+    for (i = 0; i < theList.length; i++) {
+        //console.log(theList[i][0])
+        //console.log(theList[i][1])
+        console.log(redNames[i])
+        addRedMarker({lat:theList[i][0], lng:theList[i][1]}, redNames[i]);
+    }
+    var greens = [[${greens}]]
+    var greenNames = [[${greenNames}]]
+    for (i = 0; i < greens.length; i++) {
+        addGreenMarker({lat:greens[i][0], lng:greens[i][1]}, greenNames[i]);
+        console.log(greenNames[i])
+    }
+    /*]]>*/
+
     }
 
 
@@ -30,5 +54,6 @@
 </script>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASo6THrWFZEbKpE1Gfbsl8pfuBTHUhmBI&callback=initMap"></script>
 <div id="test"></div>
+<h3>Red Markers: Exposed Restaurants; Green Markers: Safe Restaurants</h3>
 </body>
 </html>

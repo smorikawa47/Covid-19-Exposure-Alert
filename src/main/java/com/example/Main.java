@@ -514,6 +514,8 @@ public class Main {
   public String diningReport(HttpServletRequest request, Map<String, Object> model){
     System.out.println("Getting dining report page...");
     Dining dining = new Dining();
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+    //System.out.println("!!!The diners name is:'"+loggedInUser.getUsername()+"'" );
     model.put("dining", dining);
     return getActionFromDinerLoginStatus(request, "diningreport", "dinerlogin");
   }
@@ -521,6 +523,7 @@ public class Main {
   @PostMapping("/diningreportpage")
   public String diningReportPage(HttpServletRequest request, Map <String, Object> model){
     System.out.println("Getting dining report page...");
+    //System.out.println("diner name is !!!!!:");
     Dining dining = new Dining();
     model.put("dining", dining);
     return getActionFromDinerLoginStatus(request, "diningreport", "dinerlogin");
@@ -550,6 +553,7 @@ public class Main {
       System.out.println(sql);
       stmt.executeUpdate(sql);
       model.put("dining", dining);
+
       return "redirect:/thankyou";
     }  catch (Exception e) {
       model.put("message", e.getMessage());
@@ -804,8 +808,49 @@ public class Main {
     }
   }
   @GetMapping("/map")
-  public String googleMap(){
-    return "map";
+  public String googleMap(Map<String, Object> model){
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      String sql = "SELECT latitude, longitude, name FROM Restaurants WHERE exposure IS NOT NULL";
+      String green = "SELECT latitude, longitude, name FROM Restaurants WHERE exposure IS NULL";
+      ResultSet allRestaurants = stmt.executeQuery(sql);
+      Statement stmt2 = connection.createStatement();
+      ResultSet Green = stmt2.executeQuery(green);
+      List<List<Double>> recs = new ArrayList<>();
+      List<List<Double>> greens = new ArrayList<>();
+      List<String> redNames = new ArrayList<>();
+      List<String> greenNames = new ArrayList<>();
+      while(allRestaurants.next()){
+        Double latitude = allRestaurants.getDouble("latitude");
+        Double longitude = allRestaurants.getDouble("longitude");
+        String name = allRestaurants.getString("name");
+        ArrayList<Double> rec = new ArrayList<>();
+        rec.add(latitude);
+        rec.add(longitude);
+        recs.add(rec);
+        redNames.add(name);
+      }
+      while (Green.next()){
+        Double latitude = Green.getDouble("latitude");
+        Double longitude = Green.getDouble("longitude");
+        String name = Green.getString("name");
+        ArrayList<Double> g = new ArrayList<>();
+        g.add(latitude);
+        g.add(longitude);
+        greens.add(g);
+        greenNames.add(name);
+      }
+      model.put("recs", recs);
+      model.put("greens", greens);
+      model.put("redNames", redNames);
+      model.put("greenNames", greenNames);
+      return "map";
+    }
+    catch (Exception e) {
+      model.put("message", e.getMessage());
+      return "error";
+    }
+
   }
   @Bean
   public DataSource dataSource() throws SQLException {

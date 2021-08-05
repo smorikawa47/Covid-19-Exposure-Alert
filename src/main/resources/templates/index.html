@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -25,8 +25,11 @@
                         <td><input type ="submit" value="I am running a restaurant!" class = "adminButton"/></td>
                       </form>
                     </tr>
+                    <form class = "map" id = "map" th:action="@{/map}" method="get">
+                        <td><input type="submit" value="See Map" class="userButton"/></td>
+                    </form>
                 </table>
-                <!-- <form class = "covidButton" id = "reportCovidButtonForm" th:action = "@{/reportloginpage}" method="post">
+                 <!--<form class = "covidButton" id = "reportCovidButtonForm" th:action = "@{/reportloginpage}" method="post">
                   <input type="submit" value="Report Covid Case!" class="userButton"/> 
                 </form> -->
             </div>
