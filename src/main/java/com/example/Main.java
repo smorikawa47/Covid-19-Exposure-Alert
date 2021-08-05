@@ -39,12 +39,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 // import java.time.*;
 import java.sql.Time;
 import java.time.LocalDate;
@@ -514,19 +509,62 @@ public class Main {
   public String diningReport(HttpServletRequest request, Map<String, Object> model){
     System.out.println("Getting dining report page...");
     Dining dining = new Dining();
-    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
-    //System.out.println("!!!The diners name is:'"+loggedInUser.getUsername()+"'" );
     model.put("dining", dining);
-    return getActionFromDinerLoginStatus(request, "diningreport", "dinerlogin");
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      String sql = "SELECT exposed FROM diners WHERE name = '"+loggedInUser.getUsername()+"'";
+      ResultSet res = stmt.executeQuery(sql);
+      Boolean TF = false;
+      while(res.next()){
+        TF = res.getBoolean("exposed");
+      }
+      if(TF){
+        String warning = "You are exposed to covid!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
+        model.put("warning", warning);
+      }
+      else {
+        String warning = "You are safe!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
+        model.put("warning", warning);
+      }
+      return getActionFromDinerLoginStatus(request, "diningreport", "dinerlogin");
+    }
+    catch (Exception e) {
+      model.put("message", e.getMessage());
+      return "error";
+    }
+
   }
 
   @PostMapping("/diningreportpage")
   public String diningReportPage(HttpServletRequest request, Map <String, Object> model){
     System.out.println("Getting dining report page...");
-    //System.out.println("diner name is !!!!!:");
-    Dining dining = new Dining();
-    model.put("dining", dining);
-    return getActionFromDinerLoginStatus(request, "diningreport", "dinerlogin");
+    System.out.println("diner name is !!!!!:'"+loggedInUser.getUsername()+"'");
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      String sql = "SELECT exposed FROM diners WHERE name = '"+loggedInUser.getUsername()+"'";
+      ResultSet res = stmt.executeQuery(sql);
+      Boolean TF = false;
+      while(res.next()){
+        TF = res.getBoolean("exposed");
+      }
+      if(TF){
+        String warning = "You are exposed to covid!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
+        model.put("warning", warning);
+      }
+      else {
+        String warning = "You are safe!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
+        model.put("warning", warning);
+      }
+      Dining dining = new Dining();
+      model.put("dining", dining);
+      return getActionFromDinerLoginStatus(request, "diningreport", "dinerlogin");
+    }
+    catch (Exception e) {
+      model.put("message", e.getMessage());
+      return "error";
+    }
+
+
   }
 
   @PostMapping("/diningreport")
@@ -536,9 +574,6 @@ public class Main {
     try (Connection connection = dataSource.getConnection()) {
       Statement stmt = connection.createStatement();
       stmt.executeUpdate(SQL_DININGS_INITITALIZER);
-      //stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
-      //stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS username varchar(30)");
-
       String sql = "SELECT * FROM Restaurants WHERE name = '" + dining.getRestaurant() + "'";
       ResultSet queriedRestaurant = stmt.executeQuery(sql);
       if(!queriedRestaurant.isBeforeFirst()){
@@ -1252,5 +1287,6 @@ public class Main {
       return new Restaurant();
     }
 }
+
 
 }
