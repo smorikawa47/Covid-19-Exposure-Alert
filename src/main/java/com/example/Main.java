@@ -45,6 +45,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.Collections;
 // import java.time.*;
 import java.sql.Time;
 import java.time.LocalDate;
@@ -304,10 +306,63 @@ public class Main {
       updateDinerExposures(recentDinings);
       model.put("message", COVID_REPORTED);
       model.put("diner", loggedInUser);
-      return getActionFromDinerLoginStatus(request, "redirect:/diningreport", "redirect:/index");
+      return "redirect:/diningreportpage";
+      //return getActionFromDinerLoginStatus(request, "redirect:/diningreport", "redirect:/index");
     } catch (Exception e) {
       System.out.println("An SQL Error occured: " + e.getMessage());
       return "error";
+    }
+  }
+
+  public String generateCOVIDAlertMessage(String username){
+    Map<String, LocalDate> exposure = getDinersMostRecentExposure(username);
+    String restaurantWhereExposed = "";
+    LocalDate dateWhenExposed = LocalDate.now();
+    for(Map.Entry<String, LocalDate> exposureEntry : exposure.entrySet()){
+      restaurantWhereExposed = exposureEntry.getKey();
+      dateWhenExposed = exposureEntry.getValue();
+    }
+    String monthString = dateWhenExposed.getMonth().toString();
+    Integer day = dateWhenExposed.getDayOfMonth();
+    String weekDay = dateWhenExposed.getDayOfWeek().toString();
+    String message = "You may have been exposed to COVID-19 on " + weekDay + ", " + monthString + " " + day + " at " + restaurantWhereExposed + "!";
+    System.out.println(message);
+    return message;
+  }
+
+  public Map<String, LocalDate> getDinersMostRecentExposure(String username){
+    Map<LocalDate, String> exposures = getDinersRecentExposures(username);
+    Set<LocalDate> dates = exposures.keySet();
+    LocalDate mostRecentExposureDate = Collections.max(dates);
+    String mostRecentRestaurantName = exposures.get(mostRecentExposureDate);
+    System.out.println("The most recent exposure was on..." + mostRecentExposureDate + " at " + mostRecentRestaurantName + ".");
+    Map<String, LocalDate> mostRecentExposure = new HashMap<>();
+    mostRecentExposure.put(mostRecentRestaurantName, mostRecentExposureDate);
+    return mostRecentExposure;
+  }
+
+  public Map<LocalDate, String> getDinersRecentExposures(String username){
+    Map<LocalDate, String> exposures = new HashMap<>();
+    LocalDate date = LocalDate.now();
+    System.out.println("Finding recent restaurants...");
+    try (Connection connection = dataSource.getConnection()){
+        Statement stmt = connection.createStatement();
+        Date TodayMinusTwoWeeks = Date.valueOf(date.plusDays(-14));
+        String sql = "SELECT Restaurant, Date FROM Dinings WHERE Username = '" + username + "' AND Date >= '" + TodayMinusTwoWeeks + "' AND Exposed = true";
+        ResultSet queriedRestaurants = stmt.executeQuery(sql);
+        System.out.println("Found the following restaurants: " + queriedRestaurants.toString());
+        while(queriedRestaurants.next()){
+          String restaurant = queriedRestaurants.getString("restaurant");
+          LocalDate dateDined = queriedRestaurants.getDate("date").toLocalDate();
+          System.out.println(username + " recently dined at " + restaurant + " on " + dateDined.toString() + "!");
+          exposures.put(dateDined, restaurant);
+        }
+        System.out.println(exposures);
+        return exposures;
+      
+    } catch (Exception e) {
+      System.out.println("An SQL Error occured: " + e.getMessage());
+      return exposures;
     }
   }
 
@@ -317,9 +372,9 @@ public class Main {
     try (Connection connection = dataSource.getConnection()){
         Statement stmt = connection.createStatement();
         Date sqlDateOfDiningMinusTwoWeeks = Date.valueOf(dateOfTestResult.plusDays(-14));
-        String sql = "SELECT Restaurant, Date FROM Dinings WHERE Username = '" + username + "' AND Date > '" + sqlDateOfDiningMinusTwoWeeks + "'";
+        String sql = "SELECT Restaurant, Date FROM Dinings WHERE Username = '" + username + "' AND Date >= '" + sqlDateOfDiningMinusTwoWeeks + "'";
         ResultSet queriedRestaurants = stmt.executeQuery(sql);
-        System.out.println("Found the following restaurants: " + queriedRestaurants.toString());
+        //System.out.println("Found the following restaurants: " + queriedRestaurants.toString());
         while(queriedRestaurants.next()){
           String restaurant = queriedRestaurants.getString("restaurant");
           LocalDate dateDined = queriedRestaurants.getDate("date").toLocalDate();
@@ -354,7 +409,7 @@ public class Main {
     Map<String, LocalDate> diners = new HashMap<String, LocalDate>();
     try(Connection connection = dataSource.getConnection()){
       Statement stmt = connection.createStatement();
-      String sql = "SELECT Username, date FROM Dinings WHERE Restaurant = '" + restaurantName + "' AND Date > '" + twoWeeksAgo + "'";
+      String sql = "SELECT Username, date FROM Dinings WHERE Restaurant = '" + restaurantName + "' AND Date >= '" + twoWeeksAgo + "'";
       ResultSet queriedDiners = stmt.executeQuery(sql);
       while(queriedDiners.next()){
         String username = queriedDiners.getString("username");
@@ -429,7 +484,7 @@ public class Main {
       System.out.println("Adding the diner " + dinerToLogin + " to the model...");
       model.put("diner", d);
       System.out.println("Redirecting...");
-      return "redirect:/diningreport";
+      return "redirect:/diningreportpage";
 
     }  catch (Exception e) {
       model.put("message", e.getMessage());
@@ -518,11 +573,35 @@ public class Main {
     return getActionFromDinerLoginStatus(request, "diningreport", "dinerlogin");
   }
 
+  @GetMapping("/diningreportpage")
+  public String diningReportPageGet(HttpServletRequest request, Map <String, Object> model){
+    System.out.println("Getting dining report page...");
+    Dining dining = new Dining();
+    model.put("dining", dining);
+    if(getActionFromDinerLoginStatus(request, "diningreport", "dinerlogin").equalsIgnoreCase("diningreport")){
+      if(!getRestaurantsAUserHasDinedAtRecently(loggedInUser.getUsername(), LocalDate.now()).isEmpty()){
+        System.out.println("Found at least one dining for " + loggedInUser.getUsername() + ".");
+        if(((Diner) loggedInUser).wasExposed()){
+          model.put("message", generateCOVIDAlertMessage(loggedInUser.getUsername()));
+        }
+      }
+    }
+    return getActionFromDinerLoginStatus(request, "diningreport", "dinerlogin");
+  }
+
   @PostMapping("/diningreportpage")
   public String diningReportPage(HttpServletRequest request, Map <String, Object> model){
     System.out.println("Getting dining report page...");
     Dining dining = new Dining();
     model.put("dining", dining);
+    if(getActionFromDinerLoginStatus(request, "diningreport", "dinerlogin").equalsIgnoreCase("diningreport")){
+      if(!getRestaurantsAUserHasDinedAtRecently(loggedInUser.getUsername(), LocalDate.now()).isEmpty()){
+        System.out.println("Found at least one dining for " + loggedInUser.getUsername() + ".");
+        if(((Diner) loggedInUser).wasExposed()){
+          model.put("message", generateCOVIDAlertMessage(loggedInUser.getUsername()));
+        }
+      }
+    }
     return getActionFromDinerLoginStatus(request, "diningreport", "dinerlogin");
   }
 
