@@ -31,6 +31,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.util.WebUtils;
 
+//import jdk.internal.logger.LocalizedLoggerWrapper;
+
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.MediaType;
 
@@ -108,6 +110,7 @@ public class Main {
     //resetDatabaseTables(defaultDineAlertTableNames);        // To use them, uncomment them, run the app, and navigate to the index.
     createDefaultDineAlertTables();                          // Creates the tables for the app, if they don't yet exist.
     refreshAllDinersExposedBasedOnExposureDate();
+    refreshAllDinersTestResultBasedOnTestResultDate();
     refreshLoggedInUserFromCookies(request);                  
     return "index";
   }
@@ -332,6 +335,23 @@ public class Main {
     }
   }
 
+  public void refreshAllDinersTestResultBasedOnTestResultDate(){
+    System.out.println("Refresh diner testresult based on when they were tested...");
+    Date twoWeeksAgo = Date.valueOf(LocalDate.now().plusDays(-14));
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      String sql = "UPDATE Diners SET testresult = true WHERE testresultdate >= '" + twoWeeksAgo + "'";
+      stmt.executeUpdate(sql);
+      sql = "UPDATE Diners SET testresult = false WHERE testresultdate < '" + twoWeeksAgo + "'";
+      stmt.executeUpdate(sql);
+      sql = "UPDATE Diners SET testresult = false WHERE testresultdate IS NULL";
+      stmt.executeUpdate(sql);
+    }
+    catch (Exception e) {
+      System.out.println("An SQL error occurred trying to refresh Diner exposed status: " + e.getMessage());
+    }
+  }
+
   public void updateExposuresForDiningsAtRestaurant(String restaurantName, LocalDate dateOfExposure){
     System.out.println("Setting dinings at " + restaurantName + " on " + dateOfExposure + " to be exposed to COVID-19.");
     try (Connection connection = dataSource.getConnection()) {
@@ -370,7 +390,7 @@ public class Main {
       Statement stmt = connection.createStatement();
       for (String dinerUsername : dinerUsernames){
         if(userHasDined(dinerUsername)){
-          Map<String, LocalDate> exposure = getDinersMostRecentExposure(dinerUsername);
+          Map<String, LocalDate> exposure = mostRecentExposedDiningAttendedByADiner(dinerUsername);
           if(!exposure.isEmpty()){
             System.out.println(dinerUsername + " had recent exposures. Updating their exposed date.");
             for(Map.Entry<String, LocalDate> exposureEntry : exposure.entrySet()){
@@ -378,6 +398,9 @@ public class Main {
               dateWhenExposed = exposureEntry.getValue();
               System.out.println("There was an exposure for " + dinerUsername + " at " + exposedRestaurantName + " on " + dateWhenExposed);
               String sql = "UPDATE Diners SET exposure = '" + dateWhenExposed + "' WHERE username = '" + dinerUsername + "'";
+              System.out.println(sql);
+              stmt.executeUpdate(sql);
+              sql = "UPDATE Dinings SET exposed = true WHERE username = '" + dinerUsername + "' AND date = '" + dateWhenExposed + "'";
               System.out.println(sql);
               stmt.executeUpdate(sql); 
             }
@@ -393,19 +416,6 @@ public class Main {
     } catch (Exception e) {
       System.out.println("An SQL error occurred trying to Update Diner exposures from their Dinings: " + e.getMessage());
     }
-    // try (Connection connection = dataSource.getConnection()) {
-    //   Statement stmt = connection.createStatement();
-    //   for(String dinerUsername : dinerUsernames){
-    //     sql = "SELECT date, exposed FROM Dinings WHERE username = '" + dinerUsername + "' AND exposed = true";
-    //     ResultSet queiredDinings = stmt.executeQuery(sql);
-    //     Date diningDate = queiredDinings.getDate("date");
-    //     sql = "UPDATE Diners SET exposure = '" + diningDate + "'";
-    //   }
-    //   refreshAllDinersExposedBasedOnExposureDate();
-    // }
-    // catch (Exception e) {
-    //   System.out.println("An SQL error occurred trying to pull Diner exposures from Dinings: " + e.getMessage());
-    // }
   }
 
   public Boolean dinerHasBeenExposed(String username){
@@ -425,6 +435,28 @@ public class Main {
     }
     catch (Exception e) {
       System.out.println("An SQL Error occured trying to determine if a Diner had been exposed: " + e.getMessage());
+      return false;
+    }
+  }
+
+  public Boolean dinerHasARecentPositiveTestResult(String username){
+    Date twoWeeksAgo = Date.valueOf(LocalDate.now().plusDays(-14));
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      String sql = "SELECT exposed FROM diners WHERE username = '" + username + "' AND testresult = true AND testresultdate < '" + twoWeeksAgo + "'";
+      ResultSet res = stmt.executeQuery(sql);
+      if(!res.isBeforeFirst()){
+        return false;
+      }
+      res.next();
+      Boolean TF = false;
+      while(res.next()){
+        TF = res.getBoolean("exposed");
+      }
+      return true;
+    }
+    catch (Exception e) {
+      System.out.println("An SQL Error occured trying to determine if a Diner had a positive test result: " + e.getMessage());
       return false;
     }
   }
@@ -476,6 +508,70 @@ public class Main {
           exposures.put(dateDined, restaurant);
         }
         System.out.println(exposures);
+        return exposures;
+      
+    } catch (Exception e) {
+      System.out.println("An SQL Error occured: " + e.getMessage());
+      return exposures;
+    }
+  }
+
+  public Map<String, LocalDate> mostRecentExposedDiningAttendedByADiner(String username){
+    Map<String, LocalDate> mostRecentExposedDining = new HashMap<>();
+    if(!userHasDined(username)){
+      return mostRecentExposedDining;
+    }
+    Map<LocalDate, String> dinings = getAllRecentlyExposedDinings();
+    Map<LocalDate, String> allDiningsForDiner = new HashMap<>();
+    //Map<String, LocalDate> mostRecentExposedDining = new HashMap<>();
+    try (Connection connection = dataSource.getConnection()){
+      Statement stmt = connection.createStatement();
+      String sql = "";
+      for(Map.Entry<LocalDate, String> dining : dinings.entrySet()){
+        String restaurantName = dining.getValue();
+        Date dateDined = Date.valueOf(dining.getKey());
+        sql = "SELECT * FROM Dinings WHERE Username = '" + username + "' AND restaurant = '" + restaurantName + "' AND date = '" + dateDined + "'";
+        ResultSet queriedDining = stmt.executeQuery(sql);
+        if(queriedDining.isBeforeFirst()){
+          System.out.println(username + " did dine at an exposed dining; " + restaurantName + " on " + dateDined + ".");
+          allDiningsForDiner.put(dining.getKey(), restaurantName);
+        }
+      }
+      if(!allDiningsForDiner.isEmpty()){
+        System.out.println("Finding most recent exposed dining for " + username);
+        Set<LocalDate> dates = allDiningsForDiner.keySet();
+        LocalDate latestDate = Collections.max(dates);
+        String latestRestaurant = allDiningsForDiner.get(latestDate);
+        mostRecentExposedDining.put(latestRestaurant, latestDate);
+        return mostRecentExposedDining;
+      }
+
+      System.out.println(username + " did not dine at an exposed dining.");
+      return mostRecentExposedDining;
+    } catch (Exception e){
+      System.out.println("There was an SQL error attempting to determine if a user dined at an exposed dining: " + e.getMessage());
+      return mostRecentExposedDining;
+    }
+  }
+
+  public Map<LocalDate, String> getAllRecentlyExposedDinings(){
+    Map<LocalDate, String> exposures = new HashMap<>();
+    LocalDate date = LocalDate.now();
+    System.out.println("Finding all dinings which had an exposure...");
+    try (Connection connection = dataSource.getConnection()){
+        Statement stmt = connection.createStatement();
+        Date TodayMinusTwoWeeks = Date.valueOf(date.plusDays(-14));
+        String sql = "SELECT Restaurant, Date FROM Dinings WHERE Date >= '" + TodayMinusTwoWeeks + "' AND Exposed = true";
+        System.out.println(sql);
+        ResultSet queriedRestaurants = stmt.executeQuery(sql);
+        //System.out.println("Found the following restaurants: " + queriedRestaurants.toString());
+        while(queriedRestaurants.next()){
+          String restaurant = queriedRestaurants.getString("restaurant");
+          LocalDate dateDined = queriedRestaurants.getDate("date").toLocalDate();
+          System.out.println(restaurant + " had an exposure on " + dateDined.toString() + "!");
+          exposures.put(dateDined, restaurant);
+        }
+        //System.out.println(exposures);
         return exposures;
       
     } catch (Exception e) {
@@ -795,7 +891,7 @@ public class Main {
       sql = "INSERT INTO Dinings (restaurant, username, name,email,time,date,exposed) VALUES ('" + dining.getRestaurant() + "', '" + loggedInUser.getUsername() + "', '" + loggedInUser.getName() + "', '" + loggedInUser.getEmail() + "', '" + time + "', '" + date + "', '" + ((Diner) loggedInUser).wasExposed() +"')";
       System.out.println(sql);
       stmt.executeUpdate(sql);
-      if(dinerHasBeenExposed(loggedInUser.getUsername())){
+      if(dinerHasBeenExposed(loggedInUser.getUsername()) || dinerHasARecentPositiveTestResult(loggedInUser.getUsername())){
         System.out.println("The user currently reporting a dining, " + loggedInUser.getUsername() + ", has been exposed.");
         updateExposuresForDiningsAtRestaurant(dining.getRestaurant(), dining.getDate()); 
       }
