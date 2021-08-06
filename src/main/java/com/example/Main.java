@@ -106,7 +106,8 @@ public class Main {
   String index(HttpServletRequest request, Map<String, Object> model) throws SQLException {
     //destroyDatabaseTables(defaultDineAlertTableNames);      // These two utility functions are used to wipe or delete the database. Use them with caution.
     //resetDatabaseTables(defaultDineAlertTableNames);        // To use them, uncomment them, run the app, and navigate to the index.
-    createDefaultDineAlertTables();                           // Creates the tables for the app, if they don't yet exist.
+    createDefaultDineAlertTables();                          // Creates the tables for the app, if they don't yet exist.
+    refreshAllDinersExposedBasedOnExposureDate();
     refreshLoggedInUserFromCookies(request);                  
     return "index";
   }
@@ -314,6 +315,120 @@ public class Main {
     }
   }
 
+  public void refreshAllDinersExposedBasedOnExposureDate(){
+    System.out.println("Refresh diner exposure based on when they were exposed...");
+    Date twoWeeksAgo = Date.valueOf(LocalDate.now().plusDays(-14));
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      String sql = "UPDATE Diners SET exposed = true WHERE exposure >= '" + twoWeeksAgo + "'";
+      stmt.executeUpdate(sql);
+      sql = "UPDATE Diners SET exposed = false WHERE exposure < '" + twoWeeksAgo + "'";
+      stmt.executeUpdate(sql);
+      sql = "UPDATE Diners SET exposed = false WHERE exposure IS NULL";
+      stmt.executeUpdate(sql);
+    }
+    catch (Exception e) {
+      System.out.println("An SQL error occurred trying to refresh Diner exposed status: " + e.getMessage());
+    }
+  }
+
+  public void updateExposuresForDiningsAtRestaurant(String restaurantName, LocalDate dateOfExposure){
+    System.out.println("Setting dinings at " + restaurantName + " on " + dateOfExposure + " to be exposed to COVID-19.");
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      String sql = "UPDATE Dinings SET exposed = true WHERE date = '" + dateOfExposure + "' AND restaurant = '" + restaurantName + "'";
+      stmt.executeUpdate(sql);
+    }
+    catch (Exception e) {
+      System.out.println("An SQL error occurred trying to refresh Dining exposed status: " + e.getMessage());
+    }
+  }
+
+  public List<String> getAllDinerUsernames(){
+    System.out.println("Getting the usernames of all Diners...");
+    List<String> usernames = new ArrayList<String>();
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      String sql = "SELECT Username FROM Diners";
+      ResultSet queriedUsernames = stmt.executeQuery(sql);
+      while(queriedUsernames.next()){
+        usernames.add(queriedUsernames.getString("username"));
+      }
+      return usernames;
+    } catch (Exception e) {
+      System.out.println("An SQL error occurred trying get all Diner usernames: " + e.getMessage());
+      return usernames;
+    }
+  }
+
+  public void updateDinerExposuresFromDinings(){
+    List<String> dinerUsernames = getAllDinerUsernames();
+    System.out.println("Refreshing Diner exposures dates from their dinings.");
+    LocalDate dateWhenExposed = LocalDate.now();
+
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      for (String dinerUsername : dinerUsernames){
+        if(userHasDined(dinerUsername)){
+          Map<String, LocalDate> exposure = getDinersMostRecentExposure(dinerUsername);
+          if(!exposure.isEmpty()){
+            System.out.println(dinerUsername + " had recent exposures. Updating their exposed date.");
+            for(Map.Entry<String, LocalDate> exposureEntry : exposure.entrySet()){
+              String exposedRestaurantName = exposureEntry.getKey();
+              dateWhenExposed = exposureEntry.getValue();
+              System.out.println("There was an exposure for " + dinerUsername + " at " + exposedRestaurantName + " on " + dateWhenExposed);
+              String sql = "UPDATE Diners SET exposure = '" + dateWhenExposed + "' WHERE username = '" + dinerUsername + "'";
+              System.out.println(sql);
+              stmt.executeUpdate(sql); 
+            }
+          } else {
+            System.out.println(dinerUsername + " Has not attended any exposed dinings. Not updating their exposed date.");
+          }
+          
+        } else {
+          System.out.println(dinerUsername + " Has not dined. Not updating their exposed date.");
+        }
+      }
+      refreshAllDinersExposedBasedOnExposureDate();
+    } catch (Exception e) {
+      System.out.println("An SQL error occurred trying to Update Diner exposures from their Dinings: " + e.getMessage());
+    }
+    // try (Connection connection = dataSource.getConnection()) {
+    //   Statement stmt = connection.createStatement();
+    //   for(String dinerUsername : dinerUsernames){
+    //     sql = "SELECT date, exposed FROM Dinings WHERE username = '" + dinerUsername + "' AND exposed = true";
+    //     ResultSet queiredDinings = stmt.executeQuery(sql);
+    //     Date diningDate = queiredDinings.getDate("date");
+    //     sql = "UPDATE Diners SET exposure = '" + diningDate + "'";
+    //   }
+    //   refreshAllDinersExposedBasedOnExposureDate();
+    // }
+    // catch (Exception e) {
+    //   System.out.println("An SQL error occurred trying to pull Diner exposures from Dinings: " + e.getMessage());
+    // }
+  }
+
+  public Boolean dinerHasBeenExposed(String username){
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      String sql = "SELECT exposed FROM diners WHERE username = '" + username + "' AND exposed = true";
+      ResultSet res = stmt.executeQuery(sql);
+      if(!res.isBeforeFirst()){
+        return false;
+      }
+      res.next();
+      Boolean TF = false;
+      while(res.next()){
+        TF = res.getBoolean("exposed");
+      }
+      return true;
+    }
+    catch (Exception e) {
+      System.out.println("An SQL Error occured trying to determine if a Diner had been exposed: " + e.getMessage());
+      return false;
+    }
+  }
+
   public String generateCOVIDAlertMessage(String username){
     Map<String, LocalDate> exposure = getDinersMostRecentExposure(username);
     String restaurantWhereExposed = "";
@@ -332,11 +447,14 @@ public class Main {
 
   public Map<String, LocalDate> getDinersMostRecentExposure(String username){
     Map<LocalDate, String> exposures = getDinersRecentExposures(username);
+    Map<String, LocalDate> mostRecentExposure = new HashMap<>();
+    if(exposures.isEmpty()){
+      return mostRecentExposure;
+    }
     Set<LocalDate> dates = exposures.keySet();
     LocalDate mostRecentExposureDate = Collections.max(dates);
     String mostRecentRestaurantName = exposures.get(mostRecentExposureDate);
     System.out.println("The most recent exposure was on..." + mostRecentExposureDate + " at " + mostRecentRestaurantName + ".");
-    Map<String, LocalDate> mostRecentExposure = new HashMap<>();
     mostRecentExposure.put(mostRecentRestaurantName, mostRecentExposureDate);
     return mostRecentExposure;
   }
@@ -366,27 +484,72 @@ public class Main {
     }
   }
 
-  public Map<String, LocalDate> getRestaurantsAUserHasDinedAtRecently(String username, LocalDate dateOfTestResult){
-    Map<String, LocalDate> restaurants = new HashMap<>();
-    System.out.println("Finding recent restaurants...");
+  public Boolean userHasDined(String username){
     try (Connection connection = dataSource.getConnection()){
+      Statement stmt = connection.createStatement();
+      String sql = "SELECT * FROM Dinings WHERE username = '" + username + "'";
+      ResultSet queriedDinings = stmt.executeQuery(sql);
+      if(!queriedDinings.isBeforeFirst()){
+        System.out.println(username + " has never reported a Dining with DineAlert.");
+        return false;
+      }
+      System.out.println(username + " has reported Dinings!");
+      return true;
+    } catch (Exception e){
+      System.out.println("An SQL error occurred when attempting to check if a user has dined: " + e.getMessage());
+      return false;
+    }
+  }
+
+  public Map<String, LocalDate> getRestaurantsAUserHasDinedAt(String username){
+    Map<String, LocalDate> restaurants = new HashMap<>();
+    System.out.println("Finding all restaurants that " + username + " has dined at...");
+    if(userHasDined(username)){
+      try (Connection connection = dataSource.getConnection()){
         Statement stmt = connection.createStatement();
-        Date sqlDateOfDiningMinusTwoWeeks = Date.valueOf(dateOfTestResult.plusDays(-14));
-        String sql = "SELECT Restaurant, Date FROM Dinings WHERE Username = '" + username + "' AND Date >= '" + sqlDateOfDiningMinusTwoWeeks + "'";
+        String sql = "SELECT Restaurant, Date FROM Dinings WHERE Username = '" + username + "'";
         ResultSet queriedRestaurants = stmt.executeQuery(sql);
         //System.out.println("Found the following restaurants: " + queriedRestaurants.toString());
         while(queriedRestaurants.next()){
           String restaurant = queriedRestaurants.getString("restaurant");
           LocalDate dateDined = queriedRestaurants.getDate("date").toLocalDate();
-          System.out.println(username + " recently dined at " + restaurant + " on " + dateDined.toString() + "!");
+          System.out.println(username + " has dined at " + restaurant + " on " + dateDined.toString() + "!");
           restaurants.put(restaurant, dateDined);
         }
         return restaurants;
       
-    } catch (Exception e) {
-      System.out.println("An SQL Error occured: " + e.getMessage());
-      return restaurants;
+      } catch (Exception e) {
+        System.out.println("An SQL Error occured: " + e.getMessage());
+        return restaurants;
+      }
     }
+    return restaurants;
+  }
+
+  public Map<String, LocalDate> getRestaurantsAUserHasDinedAtRecently(String username, LocalDate dateOfTestResult){
+    Map<String, LocalDate> restaurants = new HashMap<>();
+    System.out.println("Finding restaurants that " + username + " has dined at at most two weeks before " + dateOfTestResult + "...");
+    if(userHasDined(username)){
+      try (Connection connection = dataSource.getConnection()){
+          Statement stmt = connection.createStatement();
+          Date sqlDateOfDiningMinusTwoWeeks = Date.valueOf(dateOfTestResult.plusDays(-14));
+          String sql = "SELECT Restaurant, Date FROM Dinings WHERE Username = '" + username + "' AND Date >= '" + sqlDateOfDiningMinusTwoWeeks + "'";
+          ResultSet queriedRestaurants = stmt.executeQuery(sql);
+          //System.out.println("Found the following restaurants: " + queriedRestaurants.toString());
+          while(queriedRestaurants.next()){
+            String restaurant = queriedRestaurants.getString("restaurant");
+            LocalDate dateDined = queriedRestaurants.getDate("date").toLocalDate();
+            System.out.println(username + " recently dined at " + restaurant + " on " + dateDined.toString() + "!");
+            restaurants.put(restaurant, dateDined);
+          }
+          return restaurants;
+        
+      } catch (Exception e) {
+        System.out.println("An SQL Error occured: " + e.getMessage());
+        return restaurants;
+      }
+    }
+    return restaurants;
   }
 
   public void updateRestaurantExposures(Map<String, LocalDate> dinings){
@@ -579,10 +742,12 @@ public class Main {
     Dining dining = new Dining();
     model.put("dining", dining);
     if(getActionFromDinerLoginStatus(request, "diningreport", "dinerlogin").equalsIgnoreCase("diningreport")){
-      if(!getRestaurantsAUserHasDinedAtRecently(loggedInUser.getUsername(), LocalDate.now()).isEmpty()){
-        System.out.println("Found at least one dining for " + loggedInUser.getUsername() + ".");
-        if(((Diner) loggedInUser).wasExposed()){
-          model.put("message", generateCOVIDAlertMessage(loggedInUser.getUsername()));
+      String username = loggedInUser.getUsername();
+      if(userHasDined(username)){
+        System.out.println("Found at least one dining for " + username + ".");
+        if(dinerHasBeenExposed(username)){
+          System.out.println("Diner was exposed.");
+          model.put("message", generateCOVIDAlertMessage(username));
         }
       }
     }
@@ -595,10 +760,12 @@ public class Main {
     Dining dining = new Dining();
     model.put("dining", dining);
     if(getActionFromDinerLoginStatus(request, "diningreport", "dinerlogin").equalsIgnoreCase("diningreport")){
-      if(!getRestaurantsAUserHasDinedAtRecently(loggedInUser.getUsername(), LocalDate.now()).isEmpty()){
-        System.out.println("Found at least one dining for " + loggedInUser.getUsername() + ".");
-        if(((Diner) loggedInUser).wasExposed()){
-          model.put("message", generateCOVIDAlertMessage(loggedInUser.getUsername()));
+      String username = loggedInUser.getUsername();
+      if(userHasDined(username)){
+        System.out.println("Found at least one dining for " + username + ".");
+        if(dinerHasBeenExposed(username)){
+          System.out.println("Diner was exposed.");
+          model.put("message", generateCOVIDAlertMessage(username));
         }
       }
     }
@@ -628,6 +795,11 @@ public class Main {
       sql = "INSERT INTO Dinings (restaurant, username, name,email,time,date,exposed) VALUES ('" + dining.getRestaurant() + "', '" + loggedInUser.getUsername() + "', '" + loggedInUser.getName() + "', '" + loggedInUser.getEmail() + "', '" + time + "', '" + date + "', '" + ((Diner) loggedInUser).wasExposed() +"')";
       System.out.println(sql);
       stmt.executeUpdate(sql);
+      if(dinerHasBeenExposed(loggedInUser.getUsername())){
+        System.out.println("The user currently reporting a dining, " + loggedInUser.getUsername() + ", has been exposed.");
+        updateExposuresForDiningsAtRestaurant(dining.getRestaurant(), dining.getDate()); 
+      }
+      updateDinerExposuresFromDinings();
       model.put("dining", dining);
       return "redirect:/thankyou";
     }  catch (Exception e) {
