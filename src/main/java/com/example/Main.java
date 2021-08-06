@@ -95,6 +95,7 @@ public class Main {
   private static final String COVID_EXPOSED = "A restaurant which you dined at in the past two weeks may have experienced a COVID-19 exposure!";
   private static final String YOU_HAVE_NOT_DINED = "You haven't dined at any DineAlert restaurants yet!";
   private static final String RESTAURANT_NOT_FOUND = "That restaurant has not registered with DineAlert yet!";
+  private static final String YOU_HAVE_NOT_BEEN_EXPOSED = "You have no recent COVID-19 exposures at DineAlert restaurants.";
 
   public static void main(String[] args) throws Exception {
     SpringApplication.run(Main.class, args);
@@ -453,6 +454,8 @@ public class Main {
           String restaurant = diningEntry.getValue();
           sql = "UPDATE Dinings SET exposed = true WHERE date = '" + dateDined + "' AND restaurant = '" + restaurant + "'";
           //System.out.println("Syncing dinings: " + sql);
+          stmt.executeUpdate(sql);
+          sql = "UPDATE Restaurants SET exposure = '" + dateDined + "' WHERE username = '" + restaurant + "'";
           stmt.executeUpdate(sql);
         }
       }
@@ -881,29 +884,20 @@ public class Main {
     System.out.println("Getting dining report page...");
     Dining dining = new Dining();
     model.put("dining", dining);
-    try (Connection connection = dataSource.getConnection()) {
-      Statement stmt = connection.createStatement();
-      String sql = "SELECT exposed FROM diners WHERE name = '"+loggedInUser.getUsername()+"'";
-      ResultSet res = stmt.executeQuery(sql);
-      Boolean TF = false;
-      while(res.next()){
-        TF = res.getBoolean("exposed");
+    if(getActionFromDinerLoginStatus(request, "diningreport", "dinerlogin").equalsIgnoreCase("diningreport")){
+      String username = loggedInUser.getUsername();
+      if(userHasDined(username)){
+        System.out.println("Found at least one dining for " + username + ".");
+        if(dinerHasBeenExposed(username)){
+          System.out.println("Diner was exposed.");
+          model.put("message", generateCOVIDAlertMessage(username));
+        } else {
+          System.out.println("Diner was not exposed.");
+          model.put("message", YOU_HAVE_NOT_BEEN_EXPOSED);
+        }
       }
-      if(TF){
-        String warning = "You are exposed to covid!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
-        model.put("warning", warning);
-      }
-      else {
-        String warning = "You are safe!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
-        model.put("warning", warning);
-      }
-      return getActionFromDinerLoginStatus(request, "diningreport", "dinerlogin");
     }
-    catch (Exception e) {
-      model.put("message", e.getMessage());
-      return "error";
-    }
-
+    return getActionFromDinerLoginStatus(request, "diningreport", "dinerlogin");
   }
 
   @GetMapping("/diningreportpage")
@@ -918,6 +912,9 @@ public class Main {
         if(dinerHasBeenExposed(username)){
           System.out.println("Diner was exposed.");
           model.put("message", generateCOVIDAlertMessage(username));
+        } else {
+          System.out.println("Diner was not exposed.");
+          model.put("message", YOU_HAVE_NOT_BEEN_EXPOSED);
         }
       }
     }
@@ -936,6 +933,9 @@ public class Main {
         if(dinerHasBeenExposed(username)){
           System.out.println("Diner was exposed.");
           model.put("message", generateCOVIDAlertMessage(username));
+        } else {
+          System.out.println("Diner was not exposed.");
+          model.put("message", YOU_HAVE_NOT_BEEN_EXPOSED);
         }
       }
     }
