@@ -111,7 +111,8 @@ public class Main {
     createDefaultDineAlertTables();                          // Creates the tables for the app, if they don't yet exist.
     refreshAllDinersExposedBasedOnExposureDate();
     refreshAllDinersTestResultBasedOnTestResultDate();
-    refreshLoggedInUserFromCookies(request);                  
+    refreshLoggedInUserFromCookies(request);
+    syncDiningExposures();                  
     return "index";
   }
 
@@ -438,6 +439,27 @@ public class Main {
       return false;
     }
   }
+  
+  public void syncDiningExposures(){
+    System.out.println("Syncing dining exposures...");
+    List<Map<LocalDate, String>> dinings = getAllRecentlyExposedDinings();
+    System.out.println("Found " + dinings.size() + " exposed dinings.");
+    try (Connection connection = dataSource.getConnection()){
+      Statement stmt = connection.createStatement();
+      String sql = "";
+      for(Map<LocalDate, String> dining : dinings){
+        for(Map.Entry<LocalDate, String> diningEntry : dining.entrySet()){
+          Date dateDined = Date.valueOf(diningEntry.getKey());
+          String restaurant = diningEntry.getValue();
+          sql = "UPDATE Dinings SET exposed = true WHERE date = '" + dateDined + "' AND restaurant = '" + restaurant + "'";
+          //System.out.println("Syncing dinings: " + sql);
+          stmt.executeUpdate(sql);
+        }
+      }
+    } catch (Exception e){
+      System.out.println("There was an SQL error while attempting to sync dining exposures: " + e.getMessage());
+    }
+  }
 
   public Boolean dinerHasARecentPositiveTestResult(String username){
     Date twoWeeksAgo = Date.valueOf(LocalDate.now().plusDays(-14));
@@ -478,21 +500,29 @@ public class Main {
   }
 
   public Map<String, LocalDate> getDinersMostRecentExposure(String username){
-    Map<LocalDate, String> exposures = getDinersRecentExposures(username);
+    List<Map<LocalDate, String>> exposures = getDinersRecentExposures(username);
     Map<String, LocalDate> mostRecentExposure = new HashMap<>();
     if(exposures.isEmpty()){
       return mostRecentExposure;
     }
-    Set<LocalDate> dates = exposures.keySet();
+    List<LocalDate> dates = new ArrayList<LocalDate>();
+    for(Map<LocalDate, String> exposure : exposures){
+      for(Map.Entry<LocalDate, String> exposureEntry : exposure.entrySet()){
+        dates.add(exposureEntry.getKey());
+      }
+    }
     LocalDate mostRecentExposureDate = Collections.max(dates);
-    String mostRecentRestaurantName = exposures.get(mostRecentExposureDate);
+    String mostRecentRestaurantName = "";
+    for(Map<LocalDate, String> exposure : exposures){
+      mostRecentRestaurantName = exposure.get(mostRecentExposureDate);
+    } 
     System.out.println("The most recent exposure was on..." + mostRecentExposureDate + " at " + mostRecentRestaurantName + ".");
     mostRecentExposure.put(mostRecentRestaurantName, mostRecentExposureDate);
     return mostRecentExposure;
   }
 
-  public Map<LocalDate, String> getDinersRecentExposures(String username){
-    Map<LocalDate, String> exposures = new HashMap<>();
+  public List<Map<LocalDate, String>> getDinersRecentExposures(String username){
+    List<Map<LocalDate, String>> exposures = new ArrayList<Map<LocalDate, String>>();
     LocalDate date = LocalDate.now();
     System.out.println("Finding recent restaurants...");
     try (Connection connection = dataSource.getConnection()){
@@ -504,8 +534,10 @@ public class Main {
         while(queriedRestaurants.next()){
           String restaurant = queriedRestaurants.getString("restaurant");
           LocalDate dateDined = queriedRestaurants.getDate("date").toLocalDate();
-          System.out.println(username + " recently dined at " + restaurant + " on " + dateDined.toString() + "!");
-          exposures.put(dateDined, restaurant);
+          //System.out.println(username + " recently dined at " + restaurant + " on " + dateDined.toString() + "!");
+          Map<LocalDate, String> exposure = new HashMap<>();
+          exposure.put(dateDined, restaurant);
+          exposures.add(exposure);
         }
         System.out.println(exposures);
         return exposures;
@@ -521,27 +553,45 @@ public class Main {
     if(!userHasDined(username)){
       return mostRecentExposedDining;
     }
-    Map<LocalDate, String> dinings = getAllRecentlyExposedDinings();
-    Map<LocalDate, String> allDiningsForDiner = new HashMap<>();
+    List<Map<LocalDate, String>> dinings = getAllRecentlyExposedDinings();
+    System.out.println("Found " + dinings.size() + " exposed dinings.");
+    List<Map<LocalDate, String>> allDiningsForDiner = new ArrayList<Map<LocalDate, String>>();
     //Map<String, LocalDate> mostRecentExposedDining = new HashMap<>();
     try (Connection connection = dataSource.getConnection()){
       Statement stmt = connection.createStatement();
       String sql = "";
-      for(Map.Entry<LocalDate, String> dining : dinings.entrySet()){
-        String restaurantName = dining.getValue();
-        Date dateDined = Date.valueOf(dining.getKey());
-        sql = "SELECT * FROM Dinings WHERE Username = '" + username + "' AND restaurant = '" + restaurantName + "' AND date = '" + dateDined + "'";
-        ResultSet queriedDining = stmt.executeQuery(sql);
-        if(queriedDining.isBeforeFirst()){
-          System.out.println(username + " did dine at an exposed dining; " + restaurantName + " on " + dateDined + ".");
-          allDiningsForDiner.put(dining.getKey(), restaurantName);
+      for(Map<LocalDate, String> dining : dinings){
+        for(Map.Entry<LocalDate, String> diningEntry : dining.entrySet()){
+          //System.out.println("Checking if " + username + " attended an exposed dining...");
+          String restaurantName = diningEntry.getValue();
+          //System.out.println("Exposed restaurant: " + restaurantName);
+          Date dateDined = Date.valueOf(diningEntry.getKey());
+          //System.out.println("Exposed date: " + diningEntry.getKey());
+          //sql = "SELECT * FROM Dinings WHERE Username = '" + username + "' AND restaurant = '" + restaurantName + "' AND date = '" + dateDined + "'";
+          System.out.println(sql);
+          ResultSet queriedDining = stmt.executeQuery(sql);
+          if(queriedDining.isBeforeFirst()){
+            //System.out.println(username + " did dine at an exposed dining; " + restaurantName + " on " + dateDined + ".");
+            Map<LocalDate, String> diningForDiner = new HashMap<>();
+            diningForDiner.put(diningEntry.getKey(), restaurantName);
+            allDiningsForDiner.add(diningForDiner);
+          }
         }
       }
+     
       if(!allDiningsForDiner.isEmpty()){
         System.out.println("Finding most recent exposed dining for " + username);
-        Set<LocalDate> dates = allDiningsForDiner.keySet();
+        List<LocalDate> dates = new ArrayList<LocalDate>();
+        for(Map<LocalDate, String> dining : allDiningsForDiner){
+          for(Map.Entry<LocalDate, String> diningEntry : dining.entrySet()){
+            dates.add(diningEntry.getKey());
+          }
+        }
         LocalDate latestDate = Collections.max(dates);
-        String latestRestaurant = allDiningsForDiner.get(latestDate);
+        String latestRestaurant = "";
+        for(Map<LocalDate, String> dining : allDiningsForDiner){
+          latestRestaurant = dining.get(latestDate);
+        }
         mostRecentExposedDining.put(latestRestaurant, latestDate);
         return mostRecentExposedDining;
       }
@@ -554,8 +604,8 @@ public class Main {
     }
   }
 
-  public Map<LocalDate, String> getAllRecentlyExposedDinings(){
-    Map<LocalDate, String> exposures = new HashMap<>();
+  public List<Map<LocalDate, String>> getAllRecentlyExposedDinings(){
+    List<Map<LocalDate, String>> exposures = new ArrayList<Map<LocalDate, String>>();
     LocalDate date = LocalDate.now();
     System.out.println("Finding all dinings which had an exposure...");
     try (Connection connection = dataSource.getConnection()){
@@ -568,8 +618,10 @@ public class Main {
         while(queriedRestaurants.next()){
           String restaurant = queriedRestaurants.getString("restaurant");
           LocalDate dateDined = queriedRestaurants.getDate("date").toLocalDate();
-          System.out.println(restaurant + " had an exposure on " + dateDined.toString() + "!");
-          exposures.put(dateDined, restaurant);
+          //System.out.println(restaurant + " had an exposure on " + dateDined.toString() + "!");
+          Map<LocalDate, String> exposure = new HashMap<>();
+          exposure.put(dateDined, restaurant);
+          exposures.add(exposure);
         }
         //System.out.println(exposures);
         return exposures;
@@ -891,6 +943,7 @@ public class Main {
       sql = "INSERT INTO Dinings (restaurant, username, name,email,time,date,exposed) VALUES ('" + dining.getRestaurant() + "', '" + loggedInUser.getUsername() + "', '" + loggedInUser.getName() + "', '" + loggedInUser.getEmail() + "', '" + time + "', '" + date + "', '" + ((Diner) loggedInUser).wasExposed() +"')";
       System.out.println(sql);
       stmt.executeUpdate(sql);
+      syncDiningExposures();
       if(dinerHasBeenExposed(loggedInUser.getUsername()) || dinerHasARecentPositiveTestResult(loggedInUser.getUsername())){
         System.out.println("The user currently reporting a dining, " + loggedInUser.getUsername() + ", has been exposed.");
         updateExposuresForDiningsAtRestaurant(dining.getRestaurant(), dining.getDate()); 
