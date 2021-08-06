@@ -105,20 +105,20 @@ public class Main {
   }
 
   @RequestMapping("/")
-  String index(HttpServletRequest request, Map<String, Object> model) throws SQLException {
+  String index(HttpServletResponse response, HttpServletRequest request, Map<String, Object> model) throws SQLException {
     //destroyDatabaseTables(defaultDineAlertTableNames);      // These two utility functions are used to wipe or delete the database. Use them with caution.
     //resetDatabaseTables(defaultDineAlertTableNames);        // To use them, uncomment them, run the app, and navigate to the index.
     createDefaultDineAlertTables();                          // Creates the tables for the app, if they don't yet exist.
     refreshAllDinersExposedBasedOnExposureDate();
     refreshAllDinersTestResultBasedOnTestResultDate();
-    refreshLoggedInUserFromCookies(request);
+    refreshLoggedInUserFromCookies(request, response);
     syncDiningExposures();                  
     return "index";
   }
 
   @RequestMapping("index")
-  String index1(HttpServletRequest request, Map<String, Object> model) throws SQLException {
-    refreshLoggedInUserFromCookies(request);
+  String index1(HttpServletRequest request, HttpServletResponse response, Map<String, Object> model) throws SQLException {
+    refreshLoggedInUserFromCookies(request, response);
     return "index";
   }
 
@@ -268,7 +268,7 @@ public class Main {
   public String reportCovidTestResult(HttpServletRequest request, HttpServletResponse response, Map<String, Object> model) throws SQLException {
     System.out.println("Reporting COVID-19...");
     String sql = "";
-    refreshLoggedInUserFromCookies(request);
+    refreshLoggedInUserFromCookies(request, response);
     try (Connection connection = dataSource.getConnection()) {
       Statement stmt = connection.createStatement();
       stmt.executeUpdate(SQL_DININGS_INITITALIZER);
@@ -1457,15 +1457,24 @@ public class Main {
   // Checks if the cookie exists at all;
   // Invokes update function.
 
-  public void refreshLoggedInUserFromCookies(HttpServletRequest request) throws SQLException{
+  public void refreshLoggedInUserFromCookies(HttpServletRequest request, HttpServletResponse response) throws SQLException{
     System.out.println("Checking if user needs to be updated...");
-    if(!cookieMatchesUser(request)){
-      if(savedUsernameExistsInCookies(request, "username")){
-        System.out.println("Refreshing logged in user...");
-        updateLoggedInUserFromCookies(request);
+    if(!savedUsernameExistsInCookies(request, "username")){
+      setCookie(response, "username", "");
+    } else {
+      if(Objects.isNull(getCookieString(request, "username"))){
+        setCookie(response, "username", "");
+      } else {
+        if(!cookieMatchesUser(request)){
+          if(savedUsernameExistsInCookies(request, "username")){
+            System.out.println("Refreshing logged in user...");
+            updateLoggedInUserFromCookies(request);
+          }
+        }
       }
     }
   }
+    
 
   // Creates a new logginInUser based on the discovered cookie, assuming it can find matching database entries.
 
