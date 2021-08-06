@@ -106,7 +106,7 @@ public class Main {
 
   @RequestMapping("/")
   String index(HttpServletRequest request, Map<String, Object> model) throws SQLException {
-    //destroyDatabaseTables(defaultDineAlertTableNames);      // These two utility functions are used to wipe or delete the database. Use them with caution.
+    destroyDatabaseTables(defaultDineAlertTableNames);      // These two utility functions are used to wipe or delete the database. Use them with caution.
     //resetDatabaseTables(defaultDineAlertTableNames);        // To use them, uncomment them, run the app, and navigate to the index.
     createDefaultDineAlertTables();                          // Creates the tables for the app, if they don't yet exist.
     refreshAllDinersExposedBasedOnExposureDate();
