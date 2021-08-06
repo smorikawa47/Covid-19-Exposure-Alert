@@ -881,7 +881,29 @@ public class Main {
     System.out.println("Getting dining report page...");
     Dining dining = new Dining();
     model.put("dining", dining);
-    return getActionFromDinerLoginStatus(request, "diningreport", "dinerlogin");
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      String sql = "SELECT exposed FROM diners WHERE name = '"+loggedInUser.getUsername()+"'";
+      ResultSet res = stmt.executeQuery(sql);
+      Boolean TF = false;
+      while(res.next()){
+        TF = res.getBoolean("exposed");
+      }
+      if(TF){
+        String warning = "You are exposed to covid!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
+        model.put("warning", warning);
+      }
+      else {
+        String warning = "You are safe!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
+        model.put("warning", warning);
+      }
+      return getActionFromDinerLoginStatus(request, "diningreport", "dinerlogin");
+    }
+    catch (Exception e) {
+      model.put("message", e.getMessage());
+      return "error";
+    }
+
   }
 
   @GetMapping("/diningreportpage")
@@ -927,9 +949,6 @@ public class Main {
     try (Connection connection = dataSource.getConnection()) {
       Statement stmt = connection.createStatement();
       stmt.executeUpdate(SQL_DININGS_INITITALIZER);
-      //stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
-      //stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS username varchar(30)");
-
       String sql = "SELECT * FROM Restaurants WHERE name = '" + dining.getRestaurant() + "'";
       ResultSet queriedRestaurant = stmt.executeQuery(sql);
       if(!queriedRestaurant.isBeforeFirst()){
@@ -950,6 +969,7 @@ public class Main {
       }
       updateDinerExposuresFromDinings();
       model.put("dining", dining);
+
       return "redirect:/thankyou";
     }  catch (Exception e) {
       model.put("message", e.getMessage());
@@ -1204,8 +1224,50 @@ public class Main {
     }
   }
   @GetMapping("/map")
-  public String googleMap(){
-    return "map";
+  public String googleMap(Map<String, Object> model){
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      Date twoWeeksAgo = Date.valueOf(LocalDate.now().plusDays(-14));
+      String sql = "SELECT latitude, longitude, name FROM Restaurants WHERE exposure >= '" + twoWeeksAgo + "'";
+      String green = "SELECT latitude, longitude, name FROM Restaurants WHERE exposure IS NULL OR exposure < '" + twoWeeksAgo + "'";
+      ResultSet allRestaurants = stmt.executeQuery(sql);
+      Statement stmt2 = connection.createStatement();
+      ResultSet Green = stmt2.executeQuery(green);
+      List<List<Double>> recs = new ArrayList<>();
+      List<List<Double>> greens = new ArrayList<>();
+      List<String> redNames = new ArrayList<>();
+      List<String> greenNames = new ArrayList<>();
+      while(allRestaurants.next()){
+        Double latitude = allRestaurants.getDouble("latitude");
+        Double longitude = allRestaurants.getDouble("longitude");
+        String name = allRestaurants.getString("name");
+        ArrayList<Double> rec = new ArrayList<>();
+        rec.add(latitude);
+        rec.add(longitude);
+        recs.add(rec);
+        redNames.add(name);
+      }
+      while (Green.next()){
+        Double latitude = Green.getDouble("latitude");
+        Double longitude = Green.getDouble("longitude");
+        String name = Green.getString("name");
+        ArrayList<Double> g = new ArrayList<>();
+        g.add(latitude);
+        g.add(longitude);
+        greens.add(g);
+        greenNames.add(name);
+      }
+      model.put("recs", recs);
+      model.put("greens", greens);
+      model.put("redNames", redNames);
+      model.put("greenNames", greenNames);
+      return "map";
+    }
+    catch (Exception e) {
+      model.put("message", e.getMessage());
+      return "error";
+    }
+
   }
   @Bean
   public DataSource dataSource() throws SQLException {
@@ -1607,5 +1669,6 @@ public class Main {
       return new Restaurant();
     }
 }
+
 
 }

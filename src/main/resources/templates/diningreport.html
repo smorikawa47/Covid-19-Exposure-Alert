@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -22,7 +22,9 @@
             <div id="messagesDiv">
                 <p th:text="${message}"></p>
             </div>
-            
+            <div>
+                <p th:text="${warning}"></p>
+            </div>
             <!-- back page button-->
             <form id = "backToUserSelect" th:action = "@{/}" method="post">
                 <td><input type ="submit" value="Return to home" class = "backButton"/></td>
