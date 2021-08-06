@@ -567,7 +567,7 @@ public class Main {
           //System.out.println("Exposed restaurant: " + restaurantName);
           Date dateDined = Date.valueOf(diningEntry.getKey());
           //System.out.println("Exposed date: " + diningEntry.getKey());
-          //sql = "SELECT * FROM Dinings WHERE Username = '" + username + "' AND restaurant = '" + restaurantName + "' AND date = '" + dateDined + "'";
+          sql = "SELECT * FROM Dinings WHERE Username = '" + username + "' AND restaurant = '" + restaurantName + "' AND date = '" + dateDined + "'";
           System.out.println(sql);
           ResultSet queriedDining = stmt.executeQuery(sql);
           if(queriedDining.isBeforeFirst()){
