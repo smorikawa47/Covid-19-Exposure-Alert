@@ -27,8 +27,8 @@
                     </label>
                     <label>
                         Coordinates <br>
-                        <input type = "number" th:field=*{latitude} required>
-                        <input type = "number" th:field=*{longitude} required>
+                        <input type = "number" step="0.000001" th:field=*{latitude} required>
+                        <input type = "number" step="0.000001" th:field=*{longitude} required>
                     </label>
                     <input type = "submit" value="Create account">
                 </form>
