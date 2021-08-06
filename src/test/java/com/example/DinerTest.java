@@ -16,30 +16,29 @@ import javax.sql.DataSource;
 
 import org.springframework.boot.test.context.SpringBootTest;
 
-class RestaurantTest {
-    static Restaurant p;
+class DinerTest {
+    static Diner p;
 
     @BeforeAll
     static void setUp(){
-        p = new Restaurant();
+        p = new Diner();
         p.setName("Markus");
         p.setUsername("MarkusR");
         p.setEmail("MarkusR@sfu.ca");
         p.setPassword("Password");
-        p.setId(1);
-        p.setPremiumStatus(true);
+        p.setExposed(true);
         p.setExposureDate(LocalDate.now());
-        p.setCoordinates(69, 69);
+        p.setTestResult(false);
+        p.setTestResultDate(LocalDate.now());
         
     }
 
     @Test
     public void personFname(){
-        assertEquals(69,p.getLatitude());
-        assertEquals(69,p.getLongitude());
+        assertEquals(LocalDate.now(),p.getTestResultDate());
+        assertEquals(false,p.getTestResult());
         assertEquals(LocalDate.now(),p.getExposureDate());
-        assertEquals(true,p.getPremiumStatus());
-        assertEquals(1,p.getId());
+        assertEquals(true,p.wasExposed());
         assertEquals("Markus",p.getName());
         assertEquals("MarkusR",p.getUsername());
         assertEquals("MarkusR@sfu.ca",p.getEmail());
