@@ -1,5 +1,5 @@
 body {
-    background-color:rgb(136, 50, 35);
+    background-color:rgb(88, 160, 165);
     font-family: Cambria;
     font-size: 14px;
 }
@@ -67,9 +67,9 @@ td {
 } */
 
 .backdropDiv {
-    background-color:rgb(136, 50, 35);
-    padding-left: 750px;
-    padding-right: 750px;
+    background-color:rgb(88, 160, 165);
+    padding-left: 400px;
+    padding-right: 400px;
     margin: 0 auto;
 }
 
@@ -126,7 +126,7 @@ label {
   } */
 
   input[type=submit] {
-    background-color:rgb(136, 50, 35);
+    background-color: rgb(58, 155, 161);
     border: none;
     color: white;
     text-align: center;
@@ -138,6 +138,7 @@ label {
 }
 
 input[type=submit]:hover {
-    background-color:rgb(161, 77, 62);
+    background-color: rgb(97, 194, 199);
+
 }
 
