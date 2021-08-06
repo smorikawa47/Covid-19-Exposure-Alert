@@ -10,9 +10,9 @@
 <body>
   <div class="backdropDiv">
         <div class = "mainDiv">
-          <h1 class="welcomeHeader">Logged in!</h1>
-            <h2>Diner Information</h2>
-            <table>
+          <h1 class="welcomeHeader">Welcome to the DineAlert restaurant homepage!</h1>
+            <h2>Recent Dinings at your restaurant</h2>
+            <table class = "dinersTable">
                 <tr>
                     <th>ID</th>
                     <th> Name</th>
@@ -38,10 +38,11 @@
                     </td>
                 </tr>
             </table>
+            <br>
             <form id = "Return to home" th:action = "@{/}" method="post">
                 <td><input type ="submit" value="Return to Home" class = "backButton"/></td>
             </form>
-
+            <br>
             <form id = "Log out" th:action = "@{logout}" method="post">
                 <td><input type ="submit" value="Log out" class = "logoutButton"/></td>
             </form>

@@ -68,9 +68,13 @@ td {
 
 .backdropDiv {
     background-color:rgb(136, 50, 35);
-    padding-left: 100px;
-    padding-right: 100px;
+    padding-left: 200px;
+    padding-right: 200px;
     margin: 0 auto;
+}
+
+.dinersTable {
+
 }
 
 .mainDiv {
