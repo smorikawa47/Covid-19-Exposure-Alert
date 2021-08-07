@@ -468,7 +468,7 @@ public class Main {
     Date twoWeeksAgo = Date.valueOf(LocalDate.now().plusDays(-14));
     try (Connection connection = dataSource.getConnection()) {
       Statement stmt = connection.createStatement();
-      String sql = "SELECT exposed FROM diners WHERE username = '" + username + "' AND testresult = true AND testresultdate < '" + twoWeeksAgo + "'";
+      String sql = "SELECT exposed FROM diners WHERE username = '" + username + "' AND testresult = true AND testresultdate > '" + twoWeeksAgo + "'";
       ResultSet res = stmt.executeQuery(sql);
       if(!res.isBeforeFirst()){
         return false;
