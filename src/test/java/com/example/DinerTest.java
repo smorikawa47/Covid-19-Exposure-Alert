@@ -34,15 +34,34 @@ class DinerTest {
     }
 
     @Test
-    public void personFname(){
+    public void DateCheck(){
         assertEquals(LocalDate.now(),p.getTestResultDate());
-        assertEquals(false,p.getTestResult());
         assertEquals(LocalDate.now(),p.getExposureDate());
+
+    }
+    @Test
+    public void BooleanCheck(){
+        assertEquals(false,p.getTestResult());
         assertEquals(true,p.wasExposed());
+        p.setTestResult(true);
+        p.setExposed(false);
+        assertEquals(true,p.getTestResult());
+        assertEquals(false,p.wasExposed());
+    }
+    @Test
+    public void StringCheck(){
         assertEquals("Markus",p.getName());
         assertEquals("MarkusR",p.getUsername());
         assertEquals("MarkusR@sfu.ca",p.getEmail());
         assertEquals("Password",p.getPassword());
+        p.setName("test");
+        p.setUsername("test");
+        p.setEmail("test");
+        p.setPassword("test");
+        assertEquals("test",p.getName());
+        assertEquals("test",p.getUsername());
+        assertEquals("test",p.getEmail());
+        assertEquals("test",p.getPassword());
     }
 
 }

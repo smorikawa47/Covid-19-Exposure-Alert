@@ -30,13 +30,29 @@ class DiningTest {
     }
 
     @Test
-    public void personFname(){
+    public void StringCheck(){
         assertEquals("Markus",p.getDinerName());
-        p.setDinerName("steve");
-        assertEquals("steve",p.getDinerName());
-        assertEquals(p.getDate(), LocalDate.now());
         assertEquals("MarkusR",p.getDinerUsername());
-        assertEquals(false,p.getDinerExposed());
+        assertEquals("markusrobinson00@gmail.com",p.getDinerEmail());
+        assertEquals("Restaurant1",p.getRestaurant());
+        p.setDinerName("steve");
+        p.setDinerUsername("steve");
+        p.setDinerEmail("steve");
+        p.setRestaurant("steve");
+        assertEquals("steve",p.getDinerName());
+        assertEquals("steve",p.getDinerUsername());
+        assertEquals("steve",p.getDinerEmail());
+        assertEquals("steve",p.getRestaurant());
     }
-
+    @Test
+    public void CheckDate(){
+        assertEquals(p.getDate(), LocalDate.now());
+        assertEquals("Restaurant1",p.getRestaurant());
+    }
+    @Test
+    public void CheckExposure(){
+        assertEquals(false,p.getDinerExposed());
+        p.setDinerExposed(true);
+        assertEquals(true,p.getDinerExposed());
+    }
 }
