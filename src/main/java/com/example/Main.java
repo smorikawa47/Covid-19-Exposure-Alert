@@ -114,7 +114,6 @@ public class Main {
     refreshAllDinersTestResultBasedOnTestResultDate();
     refreshLoggedInUserFromCookies(request, response);
     syncDiningExposures();
-    //deleteCertainRestaurant("Boats and Hoes");                  
     return "index";
   }
 
