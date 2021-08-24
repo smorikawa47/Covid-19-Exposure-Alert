@@ -113,7 +113,8 @@ public class Main {
     refreshAllDinersExposedBasedOnExposureDate();
     refreshAllDinersTestResultBasedOnTestResultDate();
     refreshLoggedInUserFromCookies(request, response);
-    syncDiningExposures();                  
+    syncDiningExposures();
+    deleteCertainRestaurant("Boats and Hoes");                  
     return "index";
   }
 
@@ -1309,6 +1310,18 @@ public class Main {
       } catch (Exception e){
         System.out.println("An SQL error occurred attempting to empty " + table);
       }
+    }
+  }
+
+  private void deleteCertainRestaurant(String name){
+    String sql = "";
+    try (Connection connection = dataSource.getConnection()) {
+      Statement stmt = connection.createStatement();
+      sql = "DELETE FROM Restaurants WHERE name = '" + name + "'";
+      stmt.executeUpdate(sql);
+      
+    } catch (Exception e){
+      System.out.println("An SQL error occurred attempting to delete a restaurant named " + name + ": " + e.getMessage());
     }
   }
 
