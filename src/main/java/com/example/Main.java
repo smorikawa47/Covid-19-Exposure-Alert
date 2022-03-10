@@ -49,21 +49,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.Collections;
-// import java.time.*;
 import java.sql.Time;
 import java.time.LocalDate;
-//import java.time.LocalDate;
 import java.sql.Date;
 
-// import javax.mail.Authenticator;
-// import javax.mail.Message;
-// import javax.mail.MessagingException;
-// import javax.mail.PasswordAuthentication;
-// import javax.mail.Session;
-// import javax.mail.Transport;
-// import javax.mail.internet.AddressException;
-// import javax.mail.internet.InternetAddress;
-// import javax.mail.internet.MimeMessage;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -1027,32 +1016,6 @@ public class Main {
 
       Restaurant restaurantToLogin = buildKnownRestaurantFromDatabase(restaurant.getUsername());
       login(response, restaurantToLogin);
-      // ResultSet restaurants = stmt.executeQuery("SELECT * FROM Restaurants WHERE username = '"+ restaurant.getUsername() +"'");
-      // String restaurantName = "";
-      // while(restaurants.next()) {
-      //   restaurantName = restaurants.getString("name");
-      // }
-      // stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Dinings (id serial, restaurant varchar(30), name varchar(30), email varchar(30), time time, date date, exposed boolean)");
-      // stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
-      // ResultSet diner = stmt.executeQuery("SELECT * FROM Dinings WHERE restaurant = '" +restaurantName+ "'");
-      // List<List<String>> recs = new ArrayList<>();
-      // while(diner.next()){
-      //   String id = diner.getString("id");
-      //   String name = diner.getString("name");
-      //   String email = diner.getString("email");
-      //   String time = diner.getString("time");
-      //   String date = diner.getString("date");
-      //   String exposed = diner.getString("exposed");
-      //   ArrayList<String> rec = new ArrayList<>();
-      //   rec.add(id);
-      //   rec.add(name);
-      //   rec.add(email);
-      //   rec.add(time);
-      //   rec.add(date);
-      //   rec.add(exposed);
-      //   recs.add(rec);
-      // }
-      // model.put("recs", recs);
       System.out.println("Redirecting to admin home page...");
       return "redirect:/adminhomepage";
     }  catch (Exception e) {
@@ -1064,9 +1027,6 @@ public class Main {
   @GetMapping("/home/sendEmail")
   public String sendEmail(){
     System.out.println("testing email function!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-    //SendEmail send = new SendEmail();
-    //send.set_receiverEmail("zta23@sfu.ca");
-    //send.sendalertEmail();
     return "home";
   }
 
@@ -1155,27 +1115,7 @@ public class Main {
       sql = "INSERT INTO Users (username,name,email,password,restaurant) VALUES ('" + restaurant.getUsername() + "', '" + restaurant.getName() + "', '" + restaurant.getEmail() + "', '" + restaurant.getPassword() + "', " + restaurant.isRestaurant() + ")";
       System.out.println(sql);
       stmt.executeUpdate(sql);
-
-
-      // stmt.executeUpdate(SQL_DININGS_INITITALIZER);
-      // stmt.executeUpdate("ALTER TABLE Dinings ADD COLUMN IF NOT EXISTS exposed boolean");
-      // ResultSet diner = stmt.executeQuery("SELECT * FROM Dinings WHERE restaurant = '"+ restaurant.getName() +"'");
-      //   List<List<String>> recs = new ArrayList<>();
-      //   while(diner.next()){
-      //     String id = diner.getString("id");
-      //   String name = diner.getString("name");
-      //   String email = diner.getString("email");
-      //   String time = diner.getString("time");
-      //   String date = diner.getString("date");
-      //   ArrayList<String> rec = new ArrayList<>();
-      //   rec.add(id);
-      //   rec.add(name);
-      //   rec.add(email);
-      //   rec.add(time);
-      //   rec.add(date);
-      //   recs.add(rec);
-      // }
-      // model.put("recs", recs);
+      
       return "redirect:/adminlogin";
     }  catch (Exception e) {
       model.put("message", e.getMessage());
