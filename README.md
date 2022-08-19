@@ -15,3 +15,10 @@ https://user-images.githubusercontent.com/80607636/185542496-900d98c8-2df4-4223-
 ## Restraurant Registration
 
 https://user-images.githubusercontent.com/80607636/185542522-b492c5c6-c644-4700-81ca-8057f126a362.mov
+
+## Dine in
+Once a diner created their accout, they can log into their account and enter the name of the restaurant they are about to dine in
+
+https://user-images.githubusercontent.com/80607636/185547925-b0667bf8-98eb-4d35-834e-b3a95a02ac08.mov
+
+
