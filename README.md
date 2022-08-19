@@ -10,4 +10,8 @@ The following describes a sample run of the application. A restaurant customer w
 
 ## Diner Registration
 
-https://user-images.githubusercontent.com/80607636/185541302-a19bd2e0-04af-4d7b-84ba-976a87abd21c.mov
+https://user-images.githubusercontent.com/80607636/185542496-900d98c8-2df4-4223-902f-6a817ba7b804.mov
+
+## Restraurant Registration
+
+https://user-images.githubusercontent.com/80607636/185542522-b492c5c6-c644-4700-81ca-8057f126a362.mov
