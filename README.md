@@ -8,3 +8,6 @@ This project includes several individual features. An interface that allows cust
 
 The following describes a sample run of the application. A restaurant customer will scan the QR code using their phone and insert their name and email into a form. If the customer is COVID-19 positive, he or she must report their test results to the restaurant owner. As a restaurant owner, I can login into the admin system and view the customer’s information. Furthermore, the owner is responsible for informing the potential virus carriers and should suggest them to do swab tests and quarantine accordingly. Therefore, our project has sufficient work for our team to work on.
 
+## Diner Registration
+
+https://user-images.githubusercontent.com/80607636/185541302-a19bd2e0-04af-4d7b-84ba-976a87abd21c.mov
