@@ -7,11 +7,12 @@ This project includes several individual features. An interface that allows cust
 
 The following describes a sample run of the application. A restaurant customer will insert their name and email into a form, and if they tested positive for COVID-19, he or she must report their test results to the restaurant owner. As a restaurant owner, I can login into the admin system and view the customer’s information. Furthermore, the owner is responsible for informing the potential virus carriers and should suggest them to do swab tests and quarantine accordingly.
 
-## Diner Registration
+## Registration
+### Diner Registration
 
 https://user-images.githubusercontent.com/80607636/185542496-900d98c8-2df4-4223-902f-6a817ba7b804.mov
 
-## Restraurant Registration
+### Restraurant Registration
 
 https://user-images.githubusercontent.com/80607636/185542522-b492c5c6-c644-4700-81ca-8057f126a362.mov
 
@@ -19,5 +20,4 @@ https://user-images.githubusercontent.com/80607636/185542522-b492c5c6-c644-4700-
 Once a diner created their accout, they can log into their account and enter the name of the restaurant they are about to dine in
 
 https://user-images.githubusercontent.com/80607636/185547925-b0667bf8-98eb-4d35-834e-b3a95a02ac08.mov
-
 
