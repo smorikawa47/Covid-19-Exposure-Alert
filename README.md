@@ -30,3 +30,13 @@ The exposure status changes from negative to positive for the following diners:
 - a diner who was in the same restaurant as a COVID-19 carrier at the same time
 
 <img width="full" alt="report" src="https://user-images.githubusercontent.com/80607636/192122973-132e8f3d-4f05-42f4-b858-75fe5a4d2d0d.png">
+
+## Managing
+
+A restaurant owner can view:
+- Diner's contact information
+- Time and date a diner visited their restaurant
+
+A restaurant owner can also delete a diner from their diner list
+
+https://user-images.githubusercontent.com/80607636/192123446-3ef082f5-8cd8-4419-b61d-3195d3d6a9ce.mov
