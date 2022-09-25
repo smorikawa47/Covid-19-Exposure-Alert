@@ -29,4 +29,4 @@ The exposure status changes for the following diners:
 - a diner who reported a positive test result
 - a diner who was in the same restaurant as a Covid-19 carrier at the same time
 
-<img width="full" height="500" alt="report" src="https://user-images.githubusercontent.com/80607636/192122973-132e8f3d-4f05-42f4-b858-75fe5a4d2d0d.png">
+<img width="full" alt="report" src="https://user-images.githubusercontent.com/80607636/192122973-132e8f3d-4f05-42f4-b858-75fe5a4d2d0d.png">
