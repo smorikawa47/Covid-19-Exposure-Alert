@@ -25,7 +25,7 @@ https://user-images.githubusercontent.com/80607636/185547925-b0667bf8-98eb-4d35-
 
 https://user-images.githubusercontent.com/80607636/192122832-ee64779d-fea6-47dd-9859-369bdbf86784.mov
 
-The exposure status changes for the following diners:
+The exposure status changes from negative to positive for the following diners:
 - a diner who reported a positive test result
 - a diner who was in the same restaurant as a Covid-19 carrier at the same time
 
