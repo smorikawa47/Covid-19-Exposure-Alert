@@ -21,3 +21,12 @@ Once a diner created their accout, they can log into their account and enter the
 
 https://user-images.githubusercontent.com/80607636/185547925-b0667bf8-98eb-4d35-834e-b3a95a02ac08.mov
 
+## Covid-19 Exposure Status
+
+https://user-images.githubusercontent.com/80607636/192122832-ee64779d-fea6-47dd-9859-369bdbf86784.mov
+
+The exposure status changes for the following diners:
+- a diner who reported a positive test result
+- a diner who was in the same restaurant as a Covid-19 carrier at the same time
+
+<img width="690" alt="report" src="https://user-images.githubusercontent.com/80607636/192122973-132e8f3d-4f05-42f4-b858-75fe5a4d2d0d.png">
